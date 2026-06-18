@@ -115,7 +115,7 @@
 
 | Feature | Priority | Status |
 |---------|----------|--------|
-| Health Check Endpoint (/health + /ready) | P0 | 📋 Todo |
+| Health Check Endpoint (/health + /ready) | P0 | ✅ Done |
 | Backup & Restore (content + config dump) | P0 | 📋 Todo |
 | Admin Password Reset Flow | P1 | 📋 Todo |
 | Content Caching Layer (ETag, Last-Modified, Cache-Control) | P1 | 📋 Todo |

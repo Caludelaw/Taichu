@@ -27,6 +27,7 @@ import { exportRoutes } from './routes/export.js';
 import { serveStatic } from './static.js';
 import { createMediaStore } from './media-store.js';
 import { renderTheme, serveThemeAsset } from './theme-engine.js';
+import { livenessCheck, readinessCheck } from './health.js';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -144,28 +145,25 @@ export async function router(ctx) {
     if (served) return;
   }
 
-  // Health check
+  // Health check — liveness (always 200 if process is alive)
   if (pathname === '/health') {
-    const mem = process.memoryUsage();
     const { getWSS } = await import('./websocket.js');
     const { getConfig } = await import('./config.js');
     const cfg = getConfig();
+    const result = livenessCheck(cfg, () => getWSS().getStats());
     ctx.res.writeHead(200, { 'Content-Type': 'application/json' });
-    ctx.res.end(JSON.stringify({
-      status: 'ok',
-      name: 'taichu',
-      version: cfg.version,
-      uptime: Math.floor(process.uptime()),
-      node: process.version,
-      env: cfg.nodeEnv,
-      store: cfg.storage,
-      memory: {
-        rss: Math.round(mem.rss / 1024 / 1024) + 'MB',
-        heapUsed: Math.round(mem.heapUsed / 1024 / 1024) + 'MB'
-      },
-      ws: getWSS().getStats(),
-      timestamp: new Date().toISOString()
-    }));
+    ctx.res.end(JSON.stringify(result));
+    return;
+  }
+
+  // Readiness check — probes store connectivity
+  if (pathname === '/ready') {
+    const { getConfig } = await import('./config.js');
+    const cfg = getConfig();
+    const result = await readinessCheck(ctx.store);
+    const status = result.status === 'ready' ? 200 : 503;
+    ctx.res.writeHead(status, { 'Content-Type': 'application/json' });
+    ctx.res.end(JSON.stringify({ ...result, version: cfg.version }));
     return;
   }
 

@@ -1,8 +1,61 @@
 /**
- * Server module tests — rate limiter, revisions, audit, pipeline
+ * Server module tests — health, rate limiter, revisions, audit, pipeline
  */
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
+
+// ════════════════════════════════════════════════════════════
+// Health Check
+// ════════════════════════════════════════════════════════════
+
+describe('Health Check', () => {
+  it('livenessCheck returns ok with system info', async () => {
+    const { livenessCheck } = await import('../../server/src/health.js');
+    const result = livenessCheck(
+      { version: '0.7.0', nodeEnv: 'test', storage: 'memory' },
+      () => ({ connections: 3 })
+    );
+    assert.equal(result.status, 'ok');
+    assert.equal(result.name, 'taichu');
+    assert.equal(result.version, '0.7.0');
+    assert.equal(result.env, 'test');
+    assert.equal(result.store, 'memory');
+    assert.ok(typeof result.uptime === 'number');
+    assert.ok(result.uptime >= 0);
+    assert.ok(result.memory.rss);
+    assert.ok(result.memory.heapUsed);
+    assert.equal(result.ws.connections, 3);
+    assert.ok(result.timestamp);
+  });
+
+  it('readinessCheck returns ready when store is healthy', async () => {
+    const { readinessCheck } = await import('../../server/src/health.js');
+    const healthyStore = { count: async () => 42 };
+
+    const result = await readinessCheck(healthyStore);
+    assert.equal(result.status, 'ready');
+    assert.equal(result.checks.store, 'ok');
+  });
+
+  it('readinessCheck returns not_ready when store throws', async () => {
+    const { readinessCheck } = await import('../../server/src/health.js');
+    const brokenStore = { count: async () => { throw new Error('connection lost'); } };
+
+    const result = await readinessCheck(brokenStore);
+    assert.equal(result.status, 'not_ready');
+    assert.ok(result.checks.store.startsWith('error:'));
+    assert.ok(result.checks.store.includes('connection lost'));
+  });
+
+  it('readinessCheck returns not_ready when store times out', async () => {
+    const { readinessCheck } = await import('../../server/src/health.js');
+    const slowStore = { count: async () => new Promise(() => { /* never resolves */ }) };
+
+    const result = await readinessCheck(slowStore, { timeout: 50 });
+    assert.equal(result.status, 'not_ready');
+    assert.ok(result.checks.store.includes('timed out'));
+  });
+});
 
 // ════════════════════════════════════════════════════════════
 // Rate Limiter

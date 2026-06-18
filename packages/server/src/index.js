@@ -103,7 +103,7 @@ export async function start(configOverrides = {}) {
       const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
 
       // 3. Rate limit (skip for health, static files)
-      if (!url.pathname.startsWith('/admin') && !url.pathname.startsWith('/uploads') && url.pathname !== '/health' && url.pathname !== '/ws-test.html') {
+      if (!url.pathname.startsWith('/admin') && !url.pathname.startsWith('/uploads') && url.pathname !== '/health' && url.pathname !== '/ready' && url.pathname !== '/ws-test.html') {
         const ctx = { req, res, url };
         if (!rateLimit(ctx)) return; // 429 already written
       }

@@ -33,26 +33,9 @@ jobs:
           npm ci
           npm run build
 
-      - name: Docker meta
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: |
-            ${{ env.ALI_REGISTRY }}/${{ env.ALI_NAMESPACE }}/${{ env.IMAGE_NAME }}
-            ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=ref,event=branch
-            type=ref,event=tag
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=sha,format=short
-
-      - name: Login to Aliyun ACR
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.ALI_REGISTRY }}
-          username: ${{ secrets.ALIYUN_REGISTRY_USER }}
-          password: ${{ secrets.ALIYUN_REGISTRY_PASSWORD }}
+      # ════════════════════════════════════════════════════════
+      # GHCR — always pushes (GITHUB_TOKEN is baked-in)
+      # ════════════════════════════════════════════════════════
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
@@ -61,12 +44,68 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push
+      - name: Docker meta (GHCR)
+        id: meta-ghcr
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=tag
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,format=short
+
+      - name: Build and push to GHCR
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.meta-ghcr.outputs.tags }}
+          labels: ${{ steps.meta-ghcr.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      # ════════════════════════════════════════════════════════
+      # Aliyun ACR — only if ALIYUN_REGISTRY_* secrets exist
+      # ════════════════════════════════════════════════════════
+
+      - name: Check Aliyun credentials
+        id: aliyun-check
+        run: |
+          if [ -n "${{ secrets.ALIYUN_REGISTRY_USER }}" ] && [ -n "${{ secrets.ALIYUN_REGISTRY_PASSWORD }}" ]; then
+            echo "available=true" >> $GITHUB_OUTPUT
+          else
+            echo "available=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Login to Aliyun ACR
+        if: steps.aliyun-check.outputs.available == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.ALI_REGISTRY }}
+          username: ${{ secrets.ALIYUN_REGISTRY_USER }}
+          password: ${{ secrets.ALIYUN_REGISTRY_PASSWORD }}
+
+      - name: Docker meta (Aliyun)
+        if: steps.aliyun-check.outputs.available == 'true'
+        id: meta-aliyun
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.ALI_REGISTRY }}/${{ env.ALI_NAMESPACE }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=tag
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,format=short
+
+      - name: Push to Aliyun ACR
+        if: steps.aliyun-check.outputs.available == 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta-aliyun.outputs.tags }}
+          labels: ${{ steps.meta-aliyun.outputs.labels }}
+          cache-from: type=gha

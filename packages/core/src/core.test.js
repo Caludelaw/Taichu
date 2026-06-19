@@ -404,3 +404,167 @@ describe('VectorIndex', () => {
     assert.equal(results.length, 0);
   });
 });
+
+// ════════════════════════════════════════════════════════════
+// Backup & Restore
+// ════════════════════════════════════════════════════════════
+
+import { exportBackup, validateBackup, importBackup } from './backup.js';
+
+describe('Backup & Restore', () => {
+  it('should export all documents from store', async () => {
+    const store = createMemoryStore();
+    await store.create({ type: 'article', data: { title: 'Hello' } });
+    await store.create({ type: 'article', data: { title: 'World' } });
+    await store.create({ type: 'page', data: { title: 'About' } });
+
+    const backup = await exportBackup(store);
+
+    assert.equal(backup.meta.format, 'taichu-backup');
+    assert.equal(backup.meta.version, '1.0');
+    assert.equal(backup.meta.stats.documentCount, 3);
+    assert.ok(backup.meta.createdAt);
+    assert.equal(backup.documents.length, 3);
+    assert.equal(backup.apiKeys.length, 0);
+  });
+
+  it('should separate api keys from content', async () => {
+    const store = createMemoryStore();
+    await store.create({ type: 'article', data: { title: 'Post' } });
+    await store.create({ type: 'api_key', data: { label: 'Test Key', key: 'taichu_test' } });
+
+    const backup = await exportBackup(store);
+
+    assert.equal(backup.meta.stats.documentCount, 1);
+    assert.equal(backup.meta.stats.apiKeyCount, 1);
+    assert.equal(backup.documents.length, 1);
+    assert.equal(backup.apiKeys.length, 1);
+  });
+
+  it('should validate a correct backup', () => {
+    const backup = {
+      meta: { format: 'taichu-backup', version: '1.0', createdAt: new Date().toISOString(), stats: { documentCount: 1, apiKeyCount: 0 } },
+      documents: [{ id: '1', type: 'article', data: { title: 'Test' } }],
+      apiKeys: []
+    };
+    const result = validateBackup(backup);
+    assert.equal(result.valid, true);
+  });
+
+  it('should reject invalid backup format', () => {
+    const result = validateBackup({ meta: { format: 'unknown' } });
+    assert.equal(result.valid, false);
+    assert.ok(result.error.includes('Invalid format'));
+  });
+
+  it('should reject backup without documents array', () => {
+    const result = validateBackup({ meta: { format: 'taichu-backup' } });
+    assert.equal(result.valid, false);
+    assert.ok(result.error.includes('documents'));
+  });
+
+  it('should reject backup with invalid document', () => {
+    const backup = {
+      meta: { format: 'taichu-backup', version: '1.0' },
+      documents: [{ type: 'article' }], // missing id and data
+      apiKeys: []
+    };
+    const result = validateBackup(backup);
+    assert.equal(result.valid, false);
+    assert.ok(result.error.includes('Invalid document'));
+  });
+
+  it('should import documents into empty store', async () => {
+    const store = createMemoryStore();
+    const backup = {
+      meta: { format: 'taichu-backup', version: '1.0', createdAt: new Date().toISOString(), stats: { documentCount: 2, apiKeyCount: 0 } },
+      documents: [
+        { id: 'a1', type: 'article', data: { title: 'First' }, status: 'published' },
+        { id: 'a2', type: 'article', data: { title: 'Second' }, status: 'draft' }
+      ],
+      apiKeys: []
+    };
+
+    const result = await importBackup(store, backup);
+    assert.equal(result.imported, 2);
+    assert.equal(result.skipped, 0);
+    assert.equal(result.errors.length, 0);
+
+    const doc = await store.get('a1');
+    assert.equal(doc.data.title, 'First');
+    assert.equal(doc.status, 'published');
+  });
+
+  it('should skip existing documents with skip strategy', async () => {
+    const store = createMemoryStore();
+    await store.create({ id: 'a1', type: 'article', data: { title: 'Original' } });
+
+    const backup = {
+      meta: { format: 'taichu-backup', version: '1.0', createdAt: new Date().toISOString(), stats: { documentCount: 2, apiKeyCount: 0 } },
+      documents: [
+        { id: 'a1', type: 'article', data: { title: 'Updated' } },
+        { id: 'a2', type: 'article', data: { title: 'New' } }
+      ],
+      apiKeys: []
+    };
+
+    const result = await importBackup(store, backup, { conflictStrategy: 'skip' });
+    assert.equal(result.imported, 1);
+    assert.equal(result.skipped, 1);
+
+    const doc = await store.get('a1');
+    assert.equal(doc.data.title, 'Original'); // not overwritten
+  });
+
+  it('should overwrite existing documents with overwrite strategy', async () => {
+    const store = createMemoryStore();
+    await store.create({ id: 'a1', type: 'article', data: { title: 'Original' } });
+
+    const backup = {
+      meta: { format: 'taichu-backup', version: '1.0', createdAt: new Date().toISOString(), stats: { documentCount: 1, apiKeyCount: 0 } },
+      documents: [
+        { id: 'a1', type: 'article', data: { title: 'Updated' } }
+      ],
+      apiKeys: []
+    };
+
+    const result = await importBackup(store, backup, { conflictStrategy: 'overwrite' });
+    assert.equal(result.imported, 1);
+    assert.equal(result.skipped, 0);
+
+    const doc = await store.get('a1');
+    assert.equal(doc.data.title, 'Updated');
+  });
+
+  it('should not import apiKeys by default', async () => {
+    const store = createMemoryStore();
+    const backup = {
+      meta: { format: 'taichu-backup', version: '1.0', createdAt: new Date().toISOString(), stats: { documentCount: 1, apiKeyCount: 1 } },
+      documents: [{ id: 'a1', type: 'article', data: { title: 'Post' } }],
+      apiKeys: [{ id: 'k1', type: 'api_key', data: { label: 'Key', key: 'taichu_secret' } }]
+    };
+
+    const result = await importBackup(store, backup);
+    assert.equal(result.imported, 1); // only the article
+  });
+
+  it('should import apiKeys when explicitly requested', async () => {
+    const store = createMemoryStore();
+    const backup = {
+      meta: { format: 'taichu-backup', version: '1.0', createdAt: new Date().toISOString(), stats: { documentCount: 1, apiKeyCount: 1 } },
+      documents: [{ id: 'a1', type: 'article', data: { title: 'Post' } }],
+      apiKeys: [{ id: 'k1', type: 'api_key', data: { label: 'Key', key: 'taichu_secret' } }]
+    };
+
+    const result = await importBackup(store, backup, { includeApiKeys: true });
+    assert.equal(result.imported, 2);
+  });
+
+  it('should reject invalid backup data on import', async () => {
+    const store = createMemoryStore();
+    await assert.rejects(
+      () => importBackup(store, { meta: { format: 'unknown' } }),
+      /Invalid backup/
+    );
+  });
+});

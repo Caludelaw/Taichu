@@ -28,6 +28,8 @@ import { serveStatic } from './static.js';
 import { createMediaStore } from './media-store.js';
 import { renderTheme, serveThemeAsset } from './theme-engine.js';
 import { livenessCheck, readinessCheck } from './health.js';
+import { requireAuth } from './middleware/auth.js';
+import { exportBackup, validateBackup, importBackup } from '../../core/src/backup.js';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -167,6 +169,14 @@ export async function router(ctx) {
     return;
   }
 
+  // Backup & Restore — admin-only
+  if (pathname === '/api/backup' && method === 'GET') {
+    return handleBackup(ctx);
+  }
+  if (pathname === '/api/backup/restore' && method === 'POST') {
+    return handleRestore(ctx);
+  }
+
   // Content Export
   if (pathname.startsWith('/api/export')) {
     const handled = await exportRoutes(ctx);
@@ -189,4 +199,84 @@ export async function router(ctx) {
     error: 'NOT_FOUND',
     message: `Route not found: ${method} ${pathname}`
   }));
+}
+
+/**
+ * Handle GET /api/backup — export full backup (admin only)
+ * @param {import('./context.js').Context} ctx
+ */
+async function handleBackup(ctx) {
+  const auth = await requireAuth(ctx);
+  if (!auth.authenticated) {
+    ctx.res.writeHead(auth.status || 401, { 'Content-Type': 'application/json' });
+    ctx.res.end(JSON.stringify({ error: auth.error, message: auth.message }));
+    return;
+  }
+  if (auth.actor.role !== 'admin') {
+    ctx.res.writeHead(403, { 'Content-Type': 'application/json' });
+    ctx.res.end(JSON.stringify({ error: 'FORBIDDEN', message: 'Admin role required' }));
+    return;
+  }
+
+  try {
+    const backup = await exportBackup(ctx.store);
+    const json = JSON.stringify(backup, null, 2);
+    const filename = `taichu-backup-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+
+    ctx.res.writeHead(200, {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Content-Disposition': `attachment; filename="${filename}"`,
+      'Content-Length': Buffer.byteLength(json)
+    });
+    ctx.res.end(json);
+  } catch (err) {
+    ctx.res.writeHead(500, { 'Content-Type': 'application/json' });
+    ctx.res.end(JSON.stringify({ error: 'BACKUP_FAILED', message: err.message }));
+  }
+}
+
+/**
+ * Handle POST /api/backup/restore — import backup (admin only)
+ * @param {import('./context.js').Context} ctx
+ */
+async function handleRestore(ctx) {
+  const auth = await requireAuth(ctx);
+  if (!auth.authenticated) {
+    ctx.res.writeHead(auth.status || 401, { 'Content-Type': 'application/json' });
+    ctx.res.end(JSON.stringify({ error: auth.error, message: auth.message }));
+    return;
+  }
+  if (auth.actor.role !== 'admin') {
+    ctx.res.writeHead(403, { 'Content-Type': 'application/json' });
+    ctx.res.end(JSON.stringify({ error: 'FORBIDDEN', message: 'Admin role required' }));
+    return;
+  }
+
+  try {
+    const validation = validateBackup(ctx.body);
+    if (!validation.valid) {
+      ctx.res.writeHead(400, { 'Content-Type': 'application/json' });
+      ctx.res.end(JSON.stringify({ error: 'INVALID_BACKUP', message: validation.error }));
+      return;
+    }
+
+    const conflictStrategy = ctx.url.searchParams.get('conflict') || 'skip';
+    const includeApiKeys = ctx.url.searchParams.get('includeApiKeys') === 'true';
+
+    const result = await importBackup(ctx.store, ctx.body, {
+      conflictStrategy,
+      includeApiKeys
+    });
+
+    ctx.res.writeHead(200, { 'Content-Type': 'application/json' });
+    ctx.res.end(JSON.stringify({
+      success: true,
+      imported: result.imported,
+      skipped: result.skipped,
+      errors: result.errors
+    }));
+  } catch (err) {
+    ctx.res.writeHead(500, { 'Content-Type': 'application/json' });
+    ctx.res.end(JSON.stringify({ error: 'RESTORE_FAILED', message: err.message }));
+  }
 }

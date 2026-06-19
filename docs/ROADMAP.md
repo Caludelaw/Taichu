@@ -116,7 +116,7 @@
 | Feature | Priority | Status |
 |---------|----------|--------|
 | Health Check Endpoint (/health + /ready) | P0 | ✅ Done |
-| Backup & Restore (content + config dump) | P0 | 📋 Todo |
+| Backup & Restore (content + config dump) | P0 | ✅ Done |
 | Admin Password Reset Flow | P1 | 📋 Todo |
 | Content Caching Layer (ETag, Last-Modified, Cache-Control) | P1 | 📋 Todo |
 | Metrics & Monitoring (Prometheus /metrics endpoint) | P2 | 📋 Todo |

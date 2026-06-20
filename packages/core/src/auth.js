@@ -156,3 +156,41 @@ export function verifyAPIKey(key, storedHash) {
   const hash = crypto.createHash('sha256').update(key).digest('hex');
   return crypto.timingSafeEqual(Buffer.from(hash, 'hex'), Buffer.from(storedHash, 'hex'));
 }
+
+// ─── Password Reset Token ───────────────────────────────────
+
+/**
+ * 生成密码重置 Token（JWT，1 小时过期，专用 purpose）
+ *
+ * @param {string} userId — 用户 ID
+ * @param {string} secret — JWT 签名密钥
+ * @returns {string} 重置 token
+ */
+export function generateResetToken(userId, secret) {
+  return signJWT(
+    { sub: userId, purpose: 'password-reset' },
+    secret,
+    { expiresIn: '1h' }
+  );
+}
+
+/**
+ * 验证密码重置 Token
+ *
+ * @param {string} token — 重置 token
+ * @param {string} secret — JWT 签名密钥
+ * @returns {{ valid: boolean, userId?: string, error?: string }}
+ */
+export function validateResetToken(token, secret) {
+  const result = verifyJWT(token, secret);
+
+  if (!result.valid) {
+    return { valid: false, error: result.error };
+  }
+
+  if (result.payload.purpose !== 'password-reset') {
+    return { valid: false, error: 'Token has wrong purpose' };
+  }
+
+  return { valid: true, userId: result.payload.sub };
+}

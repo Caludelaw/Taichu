@@ -8,10 +8,19 @@
  * DELETE /api/auth/apikeys/:prefix — 删除 API Key（需认证）
  */
 
-import { hashPassword, verifyPassword, signJWT, generateAPIKey } from '../../../core/src/auth.js';
+import { hashPassword, verifyPassword, signJWT, generateAPIKey, generateResetToken, validateResetToken } from '../../../core/src/auth.js';
 import { ValidationError, UnauthorizedError } from '../../../core/src/errors.js';
 import { requireAuth, getJwtSecret } from '../middleware/auth.js';
 import { getStore } from '../context.js';
+
+/**
+ * Helper: retrieve stored reset token for a user (dev mode only)
+ */
+async function getResetTokenForUser(store, userId) {
+  const users = await store.list({ type: 'user' });
+  const user = users.find(u => u.id === userId);
+  return user ? user.data.resetToken : undefined;
+}
 
 export async function authRoutes(ctx) {
   const { pathname } = ctx.url;
@@ -196,6 +205,98 @@ export async function authRoutes(ctx) {
 
     ctx.res.writeHead(200, { 'Content-Type': 'application/json' });
     ctx.res.end(JSON.stringify({ message: `API key ${prefix.substring(0, 11)}... revoked` }));
+    return;
+  }
+
+  // POST /api/auth/forgot-password — request password reset token
+  if (pathname === '/api/auth/forgot-password' && method === 'POST') {
+    const { username } = ctx.body || {};
+
+    if (!username) {
+      ctx.res.writeHead(400, { 'Content-Type': 'application/json' });
+      ctx.res.end(JSON.stringify({ error: 'VALIDATION_ERROR', message: 'Username is required' }));
+      return;
+    }
+
+    // Always return success to prevent username enumeration
+    const users = await ctx.store.list({ type: 'user', status: 'active' });
+    const user = users.find(u => u.data.username === username);
+
+    if (user) {
+      const secret = getJwtSecret();
+      const resetToken = generateResetToken(user.id, secret);
+
+      // Store reset token on user document
+      await ctx.store.update(user.id, {
+        data: {
+          ...user.data,
+          resetToken,
+          resetTokenExpiresAt: new Date(Date.now() + 3600000).toISOString()
+        }
+      });
+    }
+
+    ctx.res.writeHead(200, { 'Content-Type': 'application/json' });
+    ctx.res.end(JSON.stringify({
+      message: 'If the account exists, a reset link has been generated.',
+      // In production, this token would be sent via email.
+      // For local development, we return it directly.
+      _devToken: user ? (await getResetTokenForUser(ctx.store, user.id)) : undefined
+    }));
+    return;
+  }
+
+  // POST /api/auth/reset-password — reset password with token
+  if (pathname === '/api/auth/reset-password' && method === 'POST') {
+    const { token, newPassword } = ctx.body || {};
+
+    if (!token || !newPassword) {
+      ctx.res.writeHead(400, { 'Content-Type': 'application/json' });
+      ctx.res.end(JSON.stringify({ error: 'VALIDATION_ERROR', message: 'Token and newPassword are required' }));
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      ctx.res.writeHead(400, { 'Content-Type': 'application/json' });
+      ctx.res.end(JSON.stringify({ error: 'VALIDATION_ERROR', message: 'Password must be at least 6 characters' }));
+      return;
+    }
+
+    const secret = getJwtSecret();
+    const validation = validateResetToken(token, secret);
+
+    if (!validation.valid) {
+      ctx.res.writeHead(400, { 'Content-Type': 'application/json' });
+      ctx.res.end(JSON.stringify({ error: 'INVALID_TOKEN', message: validation.error }));
+      return;
+    }
+
+    // Verify user exists and token matches
+    const users = await ctx.store.list({ type: 'user', status: 'active' });
+    const user = users.find(u => u.id === validation.userId);
+
+    if (!user) {
+      ctx.res.writeHead(400, { 'Content-Type': 'application/json' });
+      ctx.res.end(JSON.stringify({ error: 'INVALID_TOKEN', message: 'User not found' }));
+      return;
+    }
+
+    if (user.data.resetToken !== token) {
+      ctx.res.writeHead(400, { 'Content-Type': 'application/json' });
+      ctx.res.end(JSON.stringify({ error: 'INVALID_TOKEN', message: 'Token has already been used or is invalid' }));
+      return;
+    }
+
+    // Hash new password and clear reset token
+    const hashedPw = hashPassword(newPassword);
+    const { resetToken: _, resetTokenExpiresAt: __, ...cleanData } = user.data;
+
+    await ctx.store.update(user.id, {
+      data: { ...cleanData, password: hashedPw }
+    });
+
+    ctx.res.writeHead(200, { 'Content-Type': 'application/json' });
+    ctx.res.end(JSON.stringify({ message: 'Password has been reset successfully' }));
     return;
   }
 

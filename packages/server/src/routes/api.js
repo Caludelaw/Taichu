@@ -17,6 +17,7 @@
 import { NotFoundError, ValidationError } from '../../../core/src/errors.js';
 import { search as vectorSearch } from '../search.js';
 import { requireAuth, requireScopedAuth, optionalAuth } from '../middleware/auth.js';
+import { serveCached, latestUpdate } from '../../../core/src/cache.js';
 
 // Built-in content type registry
 // Plugins/extensions can register additional types via hooks
@@ -140,8 +141,10 @@ export async function apiRoutes(ctx) {
       queryOpts.tenantId = ctx.tenantId;
     }
     const docs = await ctx.store.list({ type, ...queryOpts });
-    ctx.res.writeHead(200, { 'Content-Type': 'application/json' });
-    ctx.res.end(JSON.stringify({ docs, total: docs.length }));
+    const body = JSON.stringify({ docs, total: docs.length });
+    const modified = latestUpdate(docs);
+    const isPublic = !!process.env.TAICHU_PUBLIC_READ;
+    if (serveCached(ctx, body, { lastModified: modified, visibility: isPublic ? 'public' : 'private' })) return;
     return;
   }
 
@@ -282,8 +285,9 @@ export async function apiRoutes(ctx) {
         ctx.res.end(JSON.stringify({ error: 'NOT_FOUND', message: `Document "${id}" not found` }));
         return;
       }
-      ctx.res.writeHead(200, { 'Content-Type': 'application/json' });
-      ctx.res.end(JSON.stringify(doc));
+      const body = JSON.stringify(doc);
+      const isPublic = !!process.env.TAICHU_PUBLIC_READ;
+      if (serveCached(ctx, body, { lastModified: doc.updatedAt, visibility: isPublic ? 'public' : 'private' })) return;
       return;
     }
 

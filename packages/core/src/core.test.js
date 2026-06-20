@@ -10,8 +10,9 @@ import assert from 'node:assert/strict';
 import { createContentType } from './content-type.js';
 import { createMemoryStore } from './store.js';
 import { createHookSystem } from './hooks.js';
-import { hashPassword, verifyPassword, signJWT, verifyJWT, generateAPIKey, verifyAPIKey } from './auth.js';
+import { hashPassword, verifyPassword, signJWT, verifyJWT, generateAPIKey, verifyAPIKey, generateResetToken, validateResetToken } from './auth.js';
 import { TaichuError, ValidationError, NotFoundError, UnauthorizedError, ForbiddenError, ConflictError } from './errors.js';
+import { generateETag, etagMatches, modifiedSince, latestUpdate } from './cache.js';
 import { createHmac } from 'node:crypto';
 
 // ════════════════════════════════════════════════════════════
@@ -312,6 +313,52 @@ describe('API Key', () => {
 });
 
 // ════════════════════════════════════════════════════════════
+// Password Reset Token
+// ════════════════════════════════════════════════════════════
+
+describe('Password Reset Token', () => {
+  const secret = 'test-reset-secret-key-32chars_min';
+
+  it('should generate a valid reset token', () => {
+    const token = generateResetToken('user-001', secret);
+    assert.ok(typeof token === 'string');
+    assert.ok(token.split('.').length === 3);
+  });
+
+  it('should validate a correct reset token', () => {
+    const token = generateResetToken('user-002', secret);
+    const result = validateResetToken(token, secret);
+    assert.equal(result.valid, true);
+    assert.equal(result.userId, 'user-002');
+  });
+
+  it('should reject token with wrong secret', () => {
+    const token = generateResetToken('user-003', secret);
+    const result = validateResetToken(token, 'wrong-secret-key-for-testing-01');
+    assert.equal(result.valid, false);
+  });
+
+  it('should reject token with wrong purpose', () => {
+    const wrongToken = signJWT(
+      { sub: 'user-004', purpose: 'other' },
+      secret,
+      { expiresIn: '1h' }
+    );
+    const result = validateResetToken(wrongToken, secret);
+    assert.equal(result.valid, false);
+  });
+
+  it('should reject expired token', async () => {
+    const expiredToken = signJWT(
+      { sub: 'user-005', purpose: 'password-reset', exp: Math.floor(Date.now() / 1000) - 60 },
+      secret
+    );
+    const result = validateResetToken(expiredToken, secret);
+    assert.equal(result.valid, false);
+  });
+});
+
+// ════════════════════════════════════════════════════════════
 // Errors
 // ════════════════════════════════════════════════════════════
 
@@ -402,6 +449,70 @@ describe('VectorIndex', () => {
 
     const results = idx.search('zzz');
     assert.equal(results.length, 0);
+  });
+});
+
+// ════════════════════════════════════════════════════════════
+// Cache — ETag & conditional requests
+// ════════════════════════════════════════════════════════════
+
+describe('Cache', () => {
+  it('should generate consistent ETag for same content', () => {
+    const e1 = generateETag('{"hello":"world"}');
+    const e2 = generateETag('{"hello":"world"}');
+    assert.equal(e1, e2);
+  });
+
+  it('should generate different ETag for different content', () => {
+    const e1 = generateETag('{"a":1}');
+    const e2 = generateETag('{"b":2}');
+    assert.notEqual(e1, e2);
+  });
+
+  it('should start with W/" prefix', () => {
+    const etag = generateETag('test');
+    assert.ok(etag.startsWith('W/"'));
+  });
+
+  it('etagMatches should return true for matching ETag', () => {
+    const etag = generateETag('data');
+    const headers = { 'if-none-match': etag };
+    assert.equal(etagMatches(headers, etag), true);
+  });
+
+  it('etagMatches should return false for non-matching ETag', () => {
+    const etag = generateETag('data');
+    const headers = { 'if-none-match': 'W/"other"' };
+    assert.equal(etagMatches(headers, etag), false);
+  });
+
+  it('etagMatches should return false when header is missing', () => {
+    assert.equal(etagMatches({}, 'W/"abc"'), false);
+  });
+
+  it('modifiedSince should return false when modified after If-Modified-Since', () => {
+    const past = new Date(Date.now() - 60000).toUTCString();
+    const now = new Date().toISOString();
+    assert.equal(modifiedSince({ 'if-modified-since': past }, now), false);
+  });
+
+  it('modifiedSince should return false when header is missing', () => {
+    assert.equal(modifiedSince({}, new Date().toISOString()), false);
+  });
+
+  it('latestUpdate should return the most recent updatedAt', () => {
+    const docs = [
+      { updatedAt: '2026-01-01T00:00:00Z' },
+      { updatedAt: '2026-06-20T00:00:00Z' },
+      { updatedAt: '2026-03-15T00:00:00Z' }
+    ];
+    const latest = latestUpdate(docs);
+    assert.ok(latest.includes('2026-06-20'));
+  });
+
+  it('latestUpdate should return null for empty array', () => {
+    assert.equal(latestUpdate([]), null);
+    assert.equal(latestUpdate(null), null);
   });
 });
 

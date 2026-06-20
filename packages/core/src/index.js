@@ -13,5 +13,6 @@ export { createStore, createMemoryStore } from './store.js';
 export { createSQLiteStore } from './sqlite-store.js';
 export { createHookSystem } from './hooks.js';
 export { TaichuError, ValidationError, NotFoundError, UnauthorizedError, ForbiddenError, ConflictError } from './errors.js';
-export { hashPassword, verifyPassword, signJWT, verifyJWT, generateAPIKey, verifyAPIKey } from './auth.js';
+export { hashPassword, verifyPassword, signJWT, verifyJWT, generateAPIKey, verifyAPIKey, generateResetToken, validateResetToken } from './auth.js';
 export { exportBackup, validateBackup, importBackup } from './backup.js';
+export { generateETag, etagMatches, modifiedSince, applyCacheHeaders, serveCached, latestUpdate } from './cache.js';

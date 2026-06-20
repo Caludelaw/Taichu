@@ -117,8 +117,8 @@
 |---------|----------|--------|
 | Health Check Endpoint (/health + /ready) | P0 | ✅ Done |
 | Backup & Restore (content + config dump) | P0 | ✅ Done |
-| Admin Password Reset Flow | P1 | 📋 Todo |
-| Content Caching Layer (ETag, Last-Modified, Cache-Control) | P1 | 📋 Todo |
+| Admin Password Reset Flow | P1 | ✅ Done |
+| Content Caching Layer (ETag, Last-Modified, Cache-Control) | P1 | ✅ Done |
 | Metrics & Monitoring (Prometheus /metrics endpoint) | P2 | 📋 Todo |
 | Agent Marketplace: Capability Discovery API | P2 | 📋 Todo |
 | CSRF Protection for Admin API | P2 | 📋 Todo |

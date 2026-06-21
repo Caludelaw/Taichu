@@ -200,3 +200,128 @@ describe('AuthProviders', () => {
     assert.ok(getProvider('test-provider'));
   });
 });
+
+// ════════════════════════════════════════════════════════════
+// CSRF Protection
+// ════════════════════════════════════════════════════════════
+
+describe('CSRF', () => {
+  it('should generate unique tokens', async () => {
+    const { generateCSRFToken } = await import('../../server/src/middleware/csrf.js');
+    const t1 = generateCSRFToken();
+    const t2 = generateCSRFToken();
+    assert.notEqual(t1, t2);
+    assert.ok(t1.length > 20);
+  });
+
+  it('should allow GET requests without CSRF token', async () => {
+    const { csrfProtection } = await import('../../server/src/middleware/csrf.js');
+    const ctx = {
+      req: { method: 'GET', headers: {} },
+      res: { writeHead() {}, end() {} },
+      url: new URL('http://localhost/api/content/article')
+    };
+    assert.equal(await csrfProtection(ctx), true);
+  });
+
+  it('should allow HEAD requests without CSRF token', async () => {
+    const { csrfProtection } = await import('../../server/src/middleware/csrf.js');
+    const ctx = {
+      req: { method: 'HEAD', headers: {} },
+      res: { writeHead() {}, end() {} },
+      url: new URL('http://localhost/api/content/article')
+    };
+    assert.equal(await csrfProtection(ctx), true);
+  });
+
+  it('should skip CSRF for public API paths', async () => {
+    const { csrfProtection } = await import('../../server/src/middleware/csrf.js');
+    const ctx = {
+      req: { method: 'POST', headers: {} },
+      res: { writeHead() {}, end() {} },
+      url: new URL('http://localhost/api/auth/login')
+    };
+    assert.equal(await csrfProtection(ctx), true);
+  });
+
+  it('should reject POST without CSRF token', async () => {
+    const { csrfProtection } = await import('../../server/src/middleware/csrf.js');
+    let writtenStatus = null;
+    const ctx = {
+      req: { method: 'POST', headers: {} },
+      res: {
+        writeHead(code) { writtenStatus = code; },
+        end() {}
+      },
+      url: new URL('http://localhost/api/content/article')
+    };
+    assert.equal(await csrfProtection(ctx), false);
+    assert.equal(writtenStatus, 403);
+  });
+
+  it('should reject DELETE without CSRF token', async () => {
+    const { csrfProtection } = await import('../../server/src/middleware/csrf.js');
+    let writtenStatus = null;
+    const ctx = {
+      req: { method: 'DELETE', headers: {} },
+      res: {
+        writeHead(code) { writtenStatus = code; },
+        end() {}
+      },
+      url: new URL('http://localhost/api/content/article/a1')
+    };
+    assert.equal(await csrfProtection(ctx), false);
+    assert.equal(writtenStatus, 403);
+  });
+
+  it('should reject with mismatched CSRF tokens', async () => {
+    const { csrfProtection, generateCSRFToken } = await import('../../server/src/middleware/csrf.js');
+    let writtenStatus = null;
+    const ctx = {
+      req: {
+        method: 'POST',
+        headers: {
+          cookie: `csrf_token=${generateCSRFToken()}`,
+          'x-csrf-token': generateCSRFToken()
+        }
+      },
+      res: {
+        writeHead(code) { writtenStatus = code; },
+        end() {}
+      },
+      url: new URL('http://localhost/api/content/article')
+    };
+    assert.equal(await csrfProtection(ctx), false);
+    assert.equal(writtenStatus, 403);
+  });
+
+  it('should accept with matching CSRF tokens', async () => {
+    const { csrfProtection, generateCSRFToken } = await import('../../server/src/middleware/csrf.js');
+    const token = generateCSRFToken();
+    const ctx = {
+      req: {
+        method: 'POST',
+        headers: {
+          cookie: `csrf_token=${token}`,
+          'x-csrf-token': token
+        }
+      },
+      res: {
+        writeHead() {},
+        end() {}
+      },
+      url: new URL('http://localhost/api/content/article')
+    };
+    assert.equal(await csrfProtection(ctx), true);
+  });
+
+  it('should skip CSRF for non-API paths', async () => {
+    const { csrfProtection } = await import('../../server/src/middleware/csrf.js');
+    const ctx = {
+      req: { method: 'POST', headers: {} },
+      res: { writeHead() {}, end() {} },
+      url: new URL('http://localhost/admin/settings')
+    };
+    assert.equal(await csrfProtection(ctx), true);
+  });
+});

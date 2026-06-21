@@ -119,9 +119,9 @@
 | Backup & Restore (content + config dump) | P0 | ✅ Done |
 | Admin Password Reset Flow | P1 | ✅ Done |
 | Content Caching Layer (ETag, Last-Modified, Cache-Control) | P1 | ✅ Done |
-| Metrics & Monitoring (Prometheus /metrics endpoint) | P2 | 📋 Todo |
+| Metrics & Monitoring (Prometheus /metrics endpoint) | P2 | ✅ Done |
 | Agent Marketplace: Capability Discovery API | P2 | 📋 Todo |
-| CSRF Protection for Admin API | P2 | 📋 Todo |
+| CSRF Protection for Admin API | P2 | ✅ Done |
 | Content Import from Markdown/CSV/JSON | P3 | 📋 Todo |
 | Federation: Cross-Instance Content Discovery | P3 | 📋 Todo |
 | Zero-Config HA: Litestream Integration | P3 | 📋 Todo |

@@ -30,6 +30,8 @@ import { renderTheme, serveThemeAsset } from './theme-engine.js';
 import { livenessCheck, readinessCheck } from './health.js';
 import { requireAuth } from './middleware/auth.js';
 import { exportBackup, validateBackup, importBackup } from '../../core/src/backup.js';
+import { generateMetrics } from '../../core/src/metrics.js';
+import { generateCSRFToken } from './middleware/csrf.js';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -46,6 +48,17 @@ export async function router(ctx) {
   // Auth routes
   if (pathname.startsWith('/api/auth')) {
     return authRoutes(ctx);
+  }
+
+  // CSRF token endpoint — SPA fetches before mutating requests
+  if (pathname === '/api/csrf-token' && method === 'GET') {
+    const token = generateCSRFToken();
+    ctx.res.writeHead(200, {
+      'Content-Type': 'application/json',
+      'Set-Cookie': `csrf_token=${token}; Path=/; SameSite=Lax; HttpOnly=false`
+    });
+    ctx.res.end(JSON.stringify({ csrfToken: token }));
+    return;
   }
 
   // ActivityPub & WebFinger (no auth required for federation)
@@ -145,6 +158,11 @@ export async function router(ctx) {
   {
     const served = await serveStatic(ctx, PUBLIC_DIR, pathname);
     if (served) return;
+  }
+
+  // Metrics — Prometheus format (admin only)
+  if (pathname === '/metrics') {
+    return handleMetrics(ctx);
   }
 
   // Health check — liveness (always 200 if process is alive)
@@ -278,5 +296,32 @@ async function handleRestore(ctx) {
   } catch (err) {
     ctx.res.writeHead(500, { 'Content-Type': 'application/json' });
     ctx.res.end(JSON.stringify({ error: 'RESTORE_FAILED', message: err.message }));
+  }
+}
+
+/**
+ * Handle GET /metrics — Prometheus metrics endpoint (admin only)
+ * @param {import('./context.js').Context} ctx
+ */
+async function handleMetrics(ctx) {
+  const auth = await requireAuth(ctx);
+  if (!auth.authenticated) {
+    ctx.res.writeHead(auth.status || 401, { 'Content-Type': 'application/json' });
+    ctx.res.end(JSON.stringify({ error: auth.error, message: auth.message }));
+    return;
+  }
+  if (auth.actor.role !== 'admin') {
+    ctx.res.writeHead(403, { 'Content-Type': 'application/json' });
+    ctx.res.end(JSON.stringify({ error: 'FORBIDDEN', message: 'Admin role required' }));
+    return;
+  }
+
+  try {
+    const metrics = generateMetrics();
+    ctx.res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8', 'Content-Length': Buffer.byteLength(metrics) });
+    ctx.res.end(metrics);
+  } catch (err) {
+    ctx.res.writeHead(500, { 'Content-Type': 'application/json' });
+    ctx.res.end(JSON.stringify({ error: 'METRICS_FAILED', message: err.message }));
   }
 }

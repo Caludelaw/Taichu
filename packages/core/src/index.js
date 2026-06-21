@@ -16,3 +16,4 @@ export { TaichuError, ValidationError, NotFoundError, UnauthorizedError, Forbidd
 export { hashPassword, verifyPassword, signJWT, verifyJWT, generateAPIKey, verifyAPIKey, generateResetToken, validateResetToken } from './auth.js';
 export { exportBackup, validateBackup, importBackup } from './backup.js';
 export { generateETag, etagMatches, modifiedSince, applyCacheHeaders, serveCached, latestUpdate } from './cache.js';
+export { counterInc, histogramObserve, gaugeSet, recordRequest, recordContentCounts, collectSystemMetrics, generateMetrics, resetMetrics, getGauge, getCounter } from './metrics.js';

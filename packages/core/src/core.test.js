@@ -13,6 +13,7 @@ import { createHookSystem } from './hooks.js';
 import { hashPassword, verifyPassword, signJWT, verifyJWT, generateAPIKey, verifyAPIKey, generateResetToken, validateResetToken } from './auth.js';
 import { TaichuError, ValidationError, NotFoundError, UnauthorizedError, ForbiddenError, ConflictError } from './errors.js';
 import { generateETag, etagMatches, modifiedSince, latestUpdate } from './cache.js';
+import { counterInc, histogramObserve, gaugeSet, recordRequest, generateMetrics, resetMetrics, getGauge, getCounter } from './metrics.js';
 import { createHmac } from 'node:crypto';
 
 // ════════════════════════════════════════════════════════════
@@ -677,5 +678,98 @@ describe('Backup & Restore', () => {
       () => importBackup(store, { meta: { format: 'unknown' } }),
       /Invalid backup/
     );
+  });
+});
+
+// ════════════════════════════════════════════════════════════
+// Metrics & Monitoring
+// ════════════════════════════════════════════════════════════
+
+describe('Metrics', () => {
+  it('should increment counters by label', () => {
+    resetMetrics();
+    counterInc('taichu_test_requests_total', 'Test counter', { method: 'GET', status: '200' });
+    counterInc('taichu_test_requests_total', 'Test counter', { method: 'GET', status: '200' });
+    counterInc('taichu_test_requests_total', 'Test counter', { method: 'POST', status: '201' });
+
+    assert.equal(getCounter('taichu_test_requests_total', { method: 'GET', status: '200' }), 2);
+    assert.equal(getCounter('taichu_test_requests_total', { method: 'POST', status: '201' }), 1);
+    assert.equal(getCounter('taichu_test_requests_total', { method: 'DELETE', status: '404' }), 0);
+  });
+
+  it('should set and get gauge values', () => {
+    resetMetrics();
+    gaugeSet('taichu_test_memory_bytes', 'Test memory', 1024000);
+    assert.equal(getGauge('taichu_test_memory_bytes'), 1024000);
+  });
+
+  it('should record observations in histograms', () => {
+    resetMetrics();
+    histogramObserve('taichu_test_duration_seconds', 'Test duration', 0.05);
+    histogramObserve('taichu_test_duration_seconds', 'Test duration', 0.15);
+    histogramObserve('taichu_test_duration_seconds', 'Test duration', 0.5);
+    // Histogram should not throw
+    const metrics = generateMetrics();
+    assert.ok(metrics.includes('taichu_test_duration_seconds_bucket'));
+    assert.ok(metrics.includes('taichu_test_duration_seconds_sum'));
+    assert.ok(metrics.includes('taichu_test_duration_seconds_count'));
+  });
+
+  it('should record requests with correct labels', () => {
+    resetMetrics();
+    recordRequest('GET', '/api/content/article', 200, 15);
+    recordRequest('GET', '/api/content/article', 200, 25);
+    recordRequest('POST', '/api/content/article', 201, 50);
+
+    assert.equal(getCounter('taichu_http_requests_total', { method: 'GET', path: '/api/content/article', status: '200' }), 2);
+    assert.equal(getCounter('taichu_http_requests_total', { method: 'POST', path: '/api/content/article', status: '201' }), 1);
+  });
+
+  it('should generate valid Prometheus text format', () => {
+    resetMetrics();
+    counterInc('test_metric', 'A test metric', { env: 'test' });
+    gaugeSet('test_gauge', 'A test gauge', 42);
+
+    const output = generateMetrics();
+    assert.ok(output.includes('# HELP test_metric'));
+    assert.ok(output.includes('# TYPE test_metric counter'));
+    assert.ok(output.includes('test_metric{env="test"} 1'));
+    assert.ok(output.includes('# HELP test_gauge'));
+    assert.ok(output.includes('# TYPE test_gauge gauge'));
+    assert.ok(output.includes('test_gauge 42'));
+  });
+
+  it('should include system metrics in output', () => {
+    resetMetrics();
+    const output = generateMetrics();
+    assert.ok(output.includes('taichu_process_heap_bytes'));
+    assert.ok(output.includes('taichu_process_uptime_seconds'));
+    assert.ok(output.includes('taichu_process_rss_bytes'));
+  });
+
+  it('should reset all metrics', () => {
+    counterInc('test_reset', 'Reset test');
+    gaugeSet('test_reset_gauge', 'Reset test gauge', 99);
+    resetMetrics();
+
+    assert.equal(getCounter('test_reset'), 0);
+    assert.equal(getGauge('test_reset_gauge'), undefined);
+  });
+
+  it('should handle escaped characters in label values', () => {
+    resetMetrics();
+    counterInc('test_escape', 'Test escaping', { path: '/api/content/article' });
+    const output = generateMetrics();
+    assert.ok(output.includes('test_escape'));
+  });
+
+  it('should handle histogram with custom buckets', () => {
+    resetMetrics();
+    histogramObserve('test_custom_bucket', 'Custom buckets', 0.75, [0.25, 0.5, 0.75, 1.0]);
+    const output = generateMetrics();
+    assert.ok(output.includes('test_custom_bucket_bucket'));
+    assert.ok(output.includes('le="0.75"'));
+    assert.ok(output.includes('le="1"'));
+    assert.ok(output.includes('le="+Inf"'));
   });
 });

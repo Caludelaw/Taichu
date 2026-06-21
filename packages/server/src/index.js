@@ -28,6 +28,8 @@ import { loadConfig, getConfig, getConfigWarnings, configSummary } from './confi
 import { getWSS } from './websocket.js';
 import { getWebhookManager } from './webhook.js';
 import { rateLimit } from './middleware/rate-limit.js';
+import { csrfProtection } from './middleware/csrf.js';
+import { recordRequest } from '../../core/src/metrics.js';
 import { record as auditRecord } from './audit.js';
 import { snapshotRevision } from './revisions.js';
 import { notify } from './notify.js';
@@ -90,6 +92,21 @@ export async function start(configOverrides = {}) {
   }
 
   const server = createServer(async (req, res) => {
+    const startTime = Date.now();
+    let statusCode = 200;
+
+    // Capture status code for metrics
+    const origWriteHead = res.writeHead.bind(res);
+    res.writeHead = function(code, ...args) {
+      statusCode = code;
+      return origWriteHead(code, ...args);
+    };
+
+    res.on('finish', () => {
+      const urlObj = new URL(req.url, `http://localhost`);
+      recordRequest(req.method, urlObj.pathname, statusCode, Date.now() - startTime);
+    });
+
     try {
       // 1. CORS
       corsMiddleware(req, res);
@@ -117,7 +134,10 @@ export async function start(configOverrides = {}) {
       // 4. Build context (reuses pre-initialized store)
       const ctx2 = await createContext({ req, res, url, body, config: { storage, dataDir } });
 
-      // 5. Route
+      // 5. CSRF protection for admin API mutating requests
+      if (!await csrfProtection(ctx2)) return;
+
+      // 6. Route
       await router(ctx2);
 
     } catch (err) {

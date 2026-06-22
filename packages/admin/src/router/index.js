@@ -20,6 +20,7 @@ const Theme = () => import('../views/Theme.vue')
 const ThemeManager = () => import('../views/ThemeManager.vue')
 const Navigation = () => import('../views/Navigation.vue')
 const PluginMarketplace = () => import('../views/PluginMarketplace.vue')
+const AgentMarketplace = () => import('../views/AgentMarketplace.vue')
 const Tags = () => import('../views/Tags.vue')
 const ApiDocs = () => import('../views/ApiDocs.vue')
 const Comments = () => import('../views/Comments.vue')
@@ -45,6 +46,7 @@ const routes = [
   { path: '/theme-manager', component: ThemeManager },
   { path: '/navigation', component: Navigation },
   { path: '/plugins', component: PluginMarketplace },
+  { path: '/agents', component: AgentMarketplace },
   { path: '/tags', component: Tags },
   { path: '/api-docs', component: ApiDocs },
   { path: '/comments', component: Comments }

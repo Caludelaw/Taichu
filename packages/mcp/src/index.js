@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Taichu MCP Server v0.3.0 — 20+ Agent Tools
+ * Taichu MCP Server v0.4.0 — 31 Agent Tools
  *
  * 让任何支持 MCP 的 AI Agent 直接操控 Taichu CMS 的内容。
  *
@@ -273,8 +273,8 @@ async function getContentRelations(args) {
 
 const server = new McpServer({
   name: 'taichu',
-  version: '0.3.0',
-  description: 'Taichu CMS — AI Agent-Native Content Infrastructure. Provides 24 tools for full content lifecycle management.'
+  version: '0.4.0',
+  description: 'Taichu CMS — AI Agent-Native Content Infrastructure. Provides 31 tools for full content lifecycle management.'
 });
 
 function reg(name, desc, schema, fn) {
@@ -306,6 +306,39 @@ reg('create_api_key',        'Create a new API key for an AI agent to access Tai
 reg('rebuild_search_index',  'Rebuild the TF-IDF search index from all existing content. Use this after importing or migrating content.',                           { type:'object', properties:{} }, rebuildSearchIndex);
 reg('get_content_relations', 'Discover content related to a document by analyzing field references and text similarity.',                                           { type:'object', properties:{ type:{ type:'string' }, id:{ type:'string' } }, required:['type','id'] }, getContentRelations);
 
+// ── Agent Marketplace Tools ─────────────────────────────────
+
+// 29. discover_agents
+async function discoverAgents(args) {
+  const params = new URLSearchParams();
+  if (args.query) params.set('query', args.query);
+  if (args.tag) params.set('tag', args.tag);
+  if (args.tool) params.set('tool', args.tool);
+  if (args.scope) params.set('scope', args.scope);
+  if (args.limit) params.set('limit', String(args.limit));
+  const data = await request(`/agents?${params}`);
+  return ok({
+    total: data.total,
+    agents: (data.agents || []).map(a => ({
+      id: a.id,
+      name: a.capability?.name,
+      description: a.capability?.description,
+      version: a.capability?.version,
+      tools: (a.capability?.tools || []).map(t => t.name),
+      tags: a.capability?.tags || [],
+      status: a.status,
+      lastSeenAt: a.lastSeenAt
+    }))
+  });
+}
+
+// 30. get_agent
+async function getAgentDetails(args) {
+  const { id } = args;
+  const data = await request(`/agents/${id}`);
+  return ok(data);
+}
+
 // ── v2.0 New Tools ────────────────────────────────────────
 
 async function queryAuditLog(args) {
@@ -336,6 +369,8 @@ reg('query_audit_log',       'Query the audit log for content operations. Filter
 reg('get_site_settings',     'Get site configuration including ICP备案 number, analytics ID, site name, and language settings.',                                    { type:'object', properties:{} }, getSiteSettings);
 reg('update_site_settings',  'Update site configuration. Use this to set ICP备案号 (icpNumber), analytics, language, etc.',                                         { type:'object', properties:{ icpNumber:{ type:'string' }, gonganNumber:{ type:'string' }, analyticsId:{ type:'string' }, siteName:{ type:'string' }, language:{ type:'string' } } }, updateSiteSettings);
 reg('list_pipelines',        'List available content processing pipelines (translation, SEO, review). Use to discover Agent automation capabilities.',               { type:'object', properties:{} }, listPipelines);
+reg('discover_agents',       'Discover registered AI agents and their capabilities. Search by query, tag, tool name, or scope. Use this to find agents that can help with specific tasks.', { type:'object', properties:{ query:{ type:'string', description:'Search query for agent name, description, or tools' }, tag:{ type:'string', description:'Filter by capability tag' }, tool:{ type:'string', description:'Search by tool name' }, scope:{ type:'string', description:'Search by permission scope' }, limit:{ type:'number' } } }, discoverAgents);
+reg('get_agent',             'Get detailed information about a registered agent, including all capabilities, endpoints, and metadata.',                                 { type:'object', properties:{ id:{ type:'string', description:'Agent ID' } }, required:['id'] }, getAgentDetails);
 
 // ─────────────────────────────────────────────────────────────
 // START
@@ -344,7 +379,7 @@ reg('list_pipelines',        'List available content processing pipelines (trans
 async function main() {
   const transport = new StdioServerTransport();
   console.error(`Taichu MCP Server v0.3.0`);
-  console.error(`API: ${API_BASE} | Auth: ${API_KEY ? 'API Key' : 'none'} | Tools: 24`);
+  console.error(`API: ${API_BASE} | Auth: ${API_KEY ? 'API Key' : 'none'} | Tools: 31`);
   console.error(`Ready for agent connections via stdio`);
   await server.connect(transport);
 }

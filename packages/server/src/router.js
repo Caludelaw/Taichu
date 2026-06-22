@@ -17,6 +17,7 @@ import { webhookRoutes } from './routes/webhook.js';
 import { auditRoutes, revisionRoutes } from './routes/audit.js';
 import { relationshipRoutes } from './routes/relationships.js';
 import { pluginMarketplaceRoutes } from './routes/plugin-marketplace.js';
+import { agentMarketplaceRoutes } from './routes/agent-marketplace.js';
 import { activityPubRoutes } from './routes/activitypub.js';
 import { workflowRoutes } from './routes/workflow.js';
 import { wechatRoutes } from './routes/wechat.js';
@@ -126,6 +127,11 @@ export async function router(ctx) {
   // Plugin marketplace routes
   if (pathname.startsWith('/api/plugins')) {
     return pluginMarketplaceRoutes(ctx);
+  }
+
+  // Agent marketplace routes
+  if (pathname.startsWith('/api/agents')) {
+    return agentMarketplaceRoutes(ctx);
   }
 
   // Content API routes

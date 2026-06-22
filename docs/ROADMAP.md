@@ -120,7 +120,7 @@
 | Admin Password Reset Flow | P1 | ✅ Done |
 | Content Caching Layer (ETag, Last-Modified, Cache-Control) | P1 | ✅ Done |
 | Metrics & Monitoring (Prometheus /metrics endpoint) | P2 | ✅ Done |
-| Agent Marketplace: Capability Discovery API | P2 | 📋 Todo |
+| Agent Marketplace: Capability Discovery API | P2 | ✅ Done |
 | CSRF Protection for Admin API | P2 | ✅ Done |
 | Content Import from Markdown/CSV/JSON | P3 | 📋 Todo |
 | Federation: Cross-Instance Content Discovery | P3 | 📋 Todo |

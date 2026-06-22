@@ -1,4 +1,4 @@
-import{o as y,j as i,k as a,F as k,p as X,z as w,H as C,x as r,K as T,r as d,i as c,B as S,l as m}from"./vendor-vue-Ept-e7RF.js";import{a as v}from"./index-fCs5rh_E.js";import{_ as x}from"./_plugin-vue_export-helper-DlAUqK2U.js";const E={class:"cards"},B={class:"card-header"},z={key:0,class:"badge active"},I={class:"card-desc"},A={class:"card-actions"},F=["onClick"],N=["onClick"],V={class:"card upload-card"},D={class:"form-group"},M={class:"form-group"},O=["disabled"],P=`// window.__TAICHU__ 包含以下配置：
+import{o as y,j as i,k as a,F as k,p as X,z as w,H as C,x as r,K as T,r as d,i as c,B as S,l as m}from"./vendor-vue-Ept-e7RF.js";import{a as v}from"./index-BdWLTPcz.js";import{_ as x}from"./_plugin-vue_export-helper-DlAUqK2U.js";const E={class:"cards"},B={class:"card-header"},z={key:0,class:"badge active"},I={class:"card-desc"},A={class:"card-actions"},F=["onClick"],N=["onClick"],V={class:"card upload-card"},D={class:"form-group"},M={class:"form-group"},O=["disabled"],P=`// window.__TAICHU__ 包含以下配置：
 {
   apiBase: "/api",
   site: {

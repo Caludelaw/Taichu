@@ -35,6 +35,7 @@
 
         <div class="nav-section">开发</div>
         <router-link to="/plugins" class="nav-item" @click="sidebarOpen = false">🧩 插件市场</router-link>
+        <router-link to="/agents" class="nav-item" @click="sidebarOpen = false">🤖 Agent 市场</router-link>
         <router-link to="/pipelines" class="nav-item" @click="sidebarOpen = false">🔄 管道模板</router-link>
         <router-link to="/api-docs" class="nav-item" @click="sidebarOpen = false">📖 API 文档</router-link>
         <a href="/api/graphql" target="_blank" class="nav-item">🔬 GraphiQL</a>

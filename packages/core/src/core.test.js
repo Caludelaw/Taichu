@@ -14,6 +14,7 @@ import { hashPassword, verifyPassword, signJWT, verifyJWT, generateAPIKey, verif
 import { TaichuError, ValidationError, NotFoundError, UnauthorizedError, ForbiddenError, ConflictError } from './errors.js';
 import { generateETag, etagMatches, modifiedSince, latestUpdate } from './cache.js';
 import { counterInc, histogramObserve, gaugeSet, recordRequest, generateMetrics, resetMetrics, getGauge, getCounter } from './metrics.js';
+import { registerAgent, unregisterAgent, agentHeartbeat, discoverAgents, listAgents, getAgent, listTags, listTools, validateCapability, generateAgentId, generateAgentToken } from './agent-marketplace.js';
 import { createHmac } from 'node:crypto';
 
 // ════════════════════════════════════════════════════════════
@@ -771,5 +772,241 @@ describe('Metrics', () => {
     assert.ok(output.includes('le="0.75"'));
     assert.ok(output.includes('le="1"'));
     assert.ok(output.includes('le="+Inf"'));
+  });
+});
+
+// ════════════════════════════════════════════════════════════
+// Agent Marketplace
+// ════════════════════════════════════════════════════════════
+
+describe('Agent Marketplace', () => {
+  it('should validate a valid capability', () => {
+    const result = validateCapability({
+      name: 'content-translator',
+      description: 'Translates content between languages',
+      tools: [{ name: 'translate', description: 'Translate text' }],
+      tags: ['translation', 'nlp']
+    });
+    assert.ok(result.valid);
+    assert.deepEqual(result.errors, []);
+  });
+
+  it('should reject missing name', () => {
+    const result = validateCapability({ description: 'No name' });
+    assert.equal(result.valid, false);
+    assert.ok(result.errors.some(e => e.includes('name')));
+  });
+
+  it('should reject non-object capability', () => {
+    const result = validateCapability(null);
+    assert.equal(result.valid, false);
+  });
+
+  it('should reject invalid tools type', () => {
+    const result = validateCapability({ name: 'test', tools: 'not-an-array' });
+    assert.equal(result.valid, false);
+  });
+
+  it('should register a new agent', () => {
+    const result = registerAgent({
+      name: 'test-agent',
+      description: 'A test agent',
+      version: '1.0.0',
+      tools: [{ name: 'do_thing', description: 'Do something' }],
+      tags: ['test']
+    });
+    assert.ok(result.entry.id.startsWith('agent_'));
+    assert.ok(result.token.startsWith('atok_'));
+    assert.equal(result.entry.capability.name, 'test-agent');
+    assert.equal(result.entry.status, 'active');
+    assert.equal(result.entry.capability.tools.length, 1);
+  });
+
+  it('should normalize tags to lowercase', () => {
+    const result = registerAgent({
+      name: 'tag-test',
+      description: 'Testing tags',
+      tags: ['AI', 'NLP', 'Content']
+    });
+    assert.deepEqual(result.entry.capability.tags, ['ai', 'nlp', 'content']);
+  });
+
+  it('should update existing agent with correct token', () => {
+    const first = registerAgent({ name: 'update-test', description: 'Initial' });
+    const updated = registerAgent(
+      { name: 'update-test', description: 'Updated' },
+      first.token
+    );
+    assert.equal(updated.entry.capability.description, 'Updated');
+    assert.equal(updated.entry.id, first.entry.id);
+    assert.equal(updated.token, first.token);
+  });
+
+  it('should reject update with wrong token', () => {
+    registerAgent({ name: 'wrong-token-test', description: 'Original' });
+    assert.throws(() => {
+      registerAgent(
+        { name: 'wrong-token-test', description: 'Hijack!' },
+        'atok_wrong_token_here'
+      );
+    }, /Invalid agent token/);
+  });
+
+  it('should list all registered agents', () => {
+    registerAgent({ name: 'list-test-1', description: 'First' });
+    registerAgent({ name: 'list-test-2', description: 'Second' });
+    const agents = listAgents();
+    const names = agents.map(a => a.capability.name);
+    assert.ok(names.includes('list-test-1'));
+    assert.ok(names.includes('list-test-2'));
+  });
+
+  it('should get single agent by ID', () => {
+    const result = registerAgent({ name: 'get-test', description: 'Get me' });
+    const entry = getAgent(result.entry.id);
+    assert.ok(entry);
+    assert.equal(entry.capability.name, 'get-test');
+  });
+
+  it('should return undefined for unknown agent', () => {
+    assert.equal(getAgent('agent_nonexistent'), undefined);
+  });
+
+  it('should discover agents by query', () => {
+    registerAgent({
+      name: 'search-target',
+      description: 'Content moderation and spam detection',
+      tools: [{ name: 'detect_spam' }],
+      tags: ['moderation', 'content']
+    });
+    registerAgent({
+      name: 'unrelated',
+      description: 'Image optimization',
+      tools: [{ name: 'optimize_image' }],
+      tags: ['media']
+    });
+
+    const result = discoverAgents({ query: 'spam' });
+    assert.equal(result.total, 1);
+    assert.equal(result.agents[0].capability.name, 'search-target');
+  });
+
+  it('should discover agents by tag', () => {
+    registerAgent({ name: 'media-agent', description: 'Media handler', tags: ['media', 'image'] });
+    registerAgent({ name: 'text-agent', description: 'Text handler', tags: ['nlp', 'text'] });
+
+    const result = discoverAgents({ tag: 'media' });
+    assert.ok(result.total >= 1);
+    assert.ok(result.agents.every(a => a.capability.tags.includes('media')));
+  });
+
+  it('should discover agents by tool name', () => {
+    registerAgent({
+      name: 'tool-agent',
+      description: 'Has tools',
+      tools: [{ name: 'special_tool' }, { name: 'other_tool' }]
+    });
+
+    const result = discoverAgents({ tool: 'special_tool' });
+    assert.ok(result.total >= 1);
+    assert.ok(result.agents.some(a =>
+      a.capability.tools.some(t => t.name === 'special_tool')
+    ));
+  });
+
+  it('should filter by status (default active)', () => {
+    registerAgent({ name: 'active-agent', description: 'Active one' });
+    const result = discoverAgents({});
+    assert.ok(result.agents.every(a => a.status === 'active'));
+  });
+
+  it('should paginate results', () => {
+    for (let i = 0; i < 30; i++) {
+      registerAgent({ name: `paginate-${i}`, description: `Agent ${i}` });
+    }
+    const result = discoverAgents({ limit: 10, offset: 5 });
+    assert.equal(result.agents.length, 10);
+    assert.ok(result.total >= 25);
+  });
+
+  it('should unregister agent with correct token', () => {
+    const result = registerAgent({ name: 'remove-me', description: 'To be removed' });
+    const removed = unregisterAgent(result.entry.id, result.token);
+    assert.equal(removed, true);
+    assert.equal(getAgent(result.entry.id), undefined);
+  });
+
+  it('should not unregister with wrong token', () => {
+    const result = registerAgent({ name: 'keep-me', description: 'Should stay' });
+    assert.throws(() => {
+      unregisterAgent(result.entry.id, 'atok_wrong');
+    }, /Invalid agent token/);
+    assert.ok(getAgent(result.entry.id));
+  });
+
+  it('should return false for unregister unknown agent', () => {
+    const result = registerAgent({ name: 'tmp-agent', description: 'Temporary' });
+    assert.equal(unregisterAgent('agent_nonexistent', result.token), false);
+  });
+
+  it('should update heartbeat', () => {
+    const result = registerAgent({ name: 'heartbeat-test', description: 'Heartbeat' });
+    const ok = agentHeartbeat(result.entry.id, result.token);
+    assert.equal(ok, true);
+  });
+
+  it('should reject heartbeat with wrong token', () => {
+    const result = registerAgent({ name: 'hb-wrong', description: 'Hearbeat wrong' });
+    assert.equal(agentHeartbeat(result.entry.id, 'atok_wrong'), false);
+  });
+
+  it('should return false for heartbeat on unknown agent', () => {
+    const result = registerAgent({ name: 'hb-tmp', description: 'HB temp' });
+    assert.equal(agentHeartbeat('agent_nonexistent', result.token), false);
+  });
+
+  it('should list all distinct tags', () => {
+    registerAgent({ name: 'tag-agent-1', description: 'A', tags: ['translation', 'nlp'] });
+    registerAgent({ name: 'tag-agent-2', description: 'B', tags: ['media', 'nlp', 'seo'] });
+    const tags = listTags();
+    assert.ok(tags.includes('nlp'));
+    assert.ok(tags.includes('translation'));
+    assert.ok(tags.includes('media'));
+    assert.ok(tags.includes('seo'));
+    // Tags should be sorted
+    for (let i = 1; i < tags.length; i++) {
+      assert.ok(tags[i] > tags[i - 1]);
+    }
+  });
+
+  it('should list all distinct tool names', () => {
+    registerAgent({
+      name: 'tool-agent-1',
+      description: 'A',
+      tools: [{ name: 'translate' }, { name: 'detect_lang' }]
+    });
+    registerAgent({
+      name: 'tool-agent-2',
+      description: 'B',
+      tools: [{ name: 'translate' }, { name: 'optimize_seo' }]
+    });
+    const tools = listTools();
+    assert.ok(tools.includes('translate'));
+    assert.ok(tools.includes('detect_lang'));
+    assert.ok(tools.includes('optimize_seo'));
+  });
+
+  it('should generate unique agent IDs', () => {
+    const id1 = generateAgentId();
+    const id2 = generateAgentId();
+    assert.notEqual(id1, id2);
+    assert.ok(id1.startsWith('agent_'));
+  });
+
+  it('should generate unique agent tokens', () => {
+    const t1 = generateAgentToken();
+    const t2 = generateAgentToken();
+    assert.notEqual(t1, t2);
+    assert.ok(t1.startsWith('atok_'));
   });
 });

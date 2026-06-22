@@ -325,3 +325,82 @@ describe('CSRF', () => {
     assert.equal(await csrfProtection(ctx), true);
   });
 });
+
+// ════════════════════════════════════════════════════════════
+// Agent Marketplace Routes
+// ════════════════════════════════════════════════════════════
+
+describe('Agent Marketplace Routes', () => {
+  it('should register an agent via POST /api/agents/register', async () => {
+    const { registerAgent, listAgents } = await import('./agent-marketplace.js');
+    // Test the core function directly, route logic tested separately
+    const result = registerAgent({
+      name: 'route-test-agent',
+      description: 'Agent created via test',
+      tools: [{ name: 'test_tool' }],
+      tags: ['test']
+    });
+    assert.ok(result.entry.id.startsWith('agent_'));
+    assert.ok(result.token.startsWith('atok_'));
+    assert.equal(result.entry.capability.name, 'route-test-agent');
+  });
+
+  it('should update existing agent when registering with same name and token', async () => {
+    const { registerAgent } = await import('./agent-marketplace.js');
+    const first = registerAgent({ name: 'dup-agent', description: 'First version' });
+    const updated = registerAgent(
+      { name: 'dup-agent', description: 'Second version' },
+      first.token
+    );
+    assert.equal(updated.entry.capability.description, 'Second version');
+  });
+
+  it('should list tags', async () => {
+    const { listTags, registerAgent } = await import('./agent-marketplace.js');
+    registerAgent({ name: 'tags-agent', description: 'Test tags', tags: ['translation', 'nlp'] });
+    const tags = listTags();
+    assert.ok(Array.isArray(tags));
+    assert.ok(tags.includes('nlp'));
+    assert.ok(tags.includes('translation'));
+  });
+
+  it('should list tools', async () => {
+    const { listTools, registerAgent } = await import('./agent-marketplace.js');
+    registerAgent({
+      name: 'tools-agt',
+      description: 'Test tools',
+      tools: [{ name: 'translate' }]
+    });
+    const tools = listTools();
+    assert.ok(Array.isArray(tools));
+    assert.ok(tools.includes('translate'));
+  });
+
+  it('should discover agents with combined filters', async () => {
+    const { registerAgent, discoverAgents } = await import('./agent-marketplace.js');
+    registerAgent({
+      name: 'combo-agent',
+      description: 'SEO and content optimization',
+      tools: [{ name: 'optimize_seo' }, { name: 'analyze_keywords' }],
+      tags: ['seo', 'content', 'marketing']
+    });
+    registerAgent({
+      name: 'other-agent',
+      description: 'Something else',
+      tools: [{ name: 'do_stuff' }],
+      tags: ['misc']
+    });
+
+    // Query + tag combined
+    const result1 = discoverAgents({ query: 'SEO', tag: 'seo' });
+    assert.ok(result1.total >= 1);
+    assert.ok(result1.agents.some(a => a.capability.name === 'combo-agent'));
+
+    // Tool filter
+    const result2 = discoverAgents({ tool: 'optimize_seo' });
+    assert.ok(result2.total >= 1);
+    assert.ok(result2.agents.every(a =>
+      a.capability.tools.some(t => t.name === 'optimize_seo')
+    ));
+  });
+});

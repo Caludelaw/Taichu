@@ -31,6 +31,15 @@ export function registerContentType(ct) {
 }
 
 /**
+ * Get a registered content type by name.
+ * @param {string} name
+ * @returns {import('../../../core/src/content-type.js').ContentType | undefined}
+ */
+export function getContentType(name) {
+  return _contentTypes.get(name);
+}
+
+/**
  * Get all registered content types (for GraphQL resolver).
  */
 export function getContentTypes() {

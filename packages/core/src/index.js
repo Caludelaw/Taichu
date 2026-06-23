@@ -15,6 +15,7 @@ export { createHookSystem } from './hooks.js';
 export { TaichuError, ValidationError, NotFoundError, UnauthorizedError, ForbiddenError, ConflictError } from './errors.js';
 export { hashPassword, verifyPassword, signJWT, verifyJWT, generateAPIKey, verifyAPIKey, generateResetToken, validateResetToken } from './auth.js';
 export { exportBackup, validateBackup, importBackup } from './backup.js';
+export { parseMarkdown, parseCSV, parseJSON, importContent } from './import-content.js';
 export { generateETag, etagMatches, modifiedSince, applyCacheHeaders, serveCached, latestUpdate } from './cache.js';
 export { generateAgentId, generateAgentToken, validateCapability, registerAgent, unregisterAgent, agentHeartbeat, listAgents, getAgent, discoverAgents, listTags, listTools } from './agent-marketplace.js';
 export { counterInc, histogramObserve, gaugeSet, recordRequest, recordContentCounts, collectSystemMetrics, generateMetrics, resetMetrics, getGauge, getCounter } from './metrics.js';

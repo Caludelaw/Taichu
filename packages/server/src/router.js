@@ -25,6 +25,7 @@ import { ssoRoutes } from './routes/sso.js';
 import { themeRoutes } from './routes/theme.js';
 import { rssSitemapRoutes } from './routes/rss.js';
 import { exportRoutes } from './routes/export.js';
+import { importRoutes } from './routes/import.js';
 import { serveStatic } from './static.js';
 import { createMediaStore } from './media-store.js';
 import { renderTheme, serveThemeAsset } from './theme-engine.js';
@@ -204,6 +205,12 @@ export async function router(ctx) {
   // Content Export
   if (pathname.startsWith('/api/export')) {
     const handled = await exportRoutes(ctx);
+    if (handled) return;
+  }
+
+  // Content Import
+  if (pathname.startsWith('/api/import')) {
+    const handled = await importRoutes(ctx);
     if (handled) return;
   }
 

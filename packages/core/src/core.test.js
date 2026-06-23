@@ -523,6 +523,7 @@ describe('Cache', () => {
 // ════════════════════════════════════════════════════════════
 
 import { exportBackup, validateBackup, importBackup } from './backup.js';
+import { parseMarkdown, parseCSV, parseJSON, importContent } from './import-content.js';
 
 describe('Backup & Restore', () => {
   it('should export all documents from store', async () => {
@@ -679,6 +680,272 @@ describe('Backup & Restore', () => {
       () => importBackup(store, { meta: { format: 'unknown' } }),
       /Invalid backup/
     );
+  });
+});
+
+// ════════════════════════════════════════════════════════════
+// Content Import — Markdown / CSV / JSON
+// ════════════════════════════════════════════════════════════
+
+describe('Content Import — Markdown', () => {
+  it('should parse markdown with frontmatter and body', () => {
+    const md = `---
+title: Hello World
+author: Test Author
+tags: tech, web, ai
+---
+
+# Hello World
+
+This is the body content.
+
+It has multiple paragraphs.
+`;
+
+    const item = parseMarkdown(md, { type: 'article' });
+    assert.equal(item.type, 'article');
+    assert.equal(item.data.title, 'Hello World');
+    assert.equal(item.data.author, 'Test Author');
+    assert.deepEqual(item.data.tags, ['tech', 'web', 'ai']);
+    assert.ok(item.data.body.includes('This is the body content'));
+    assert.ok(item.data.body.includes('It has multiple paragraphs'));
+  });
+
+  it('should handle markdown without frontmatter', () => {
+    const md = `# Just a Title
+
+Some body text here.
+`;
+
+    const item = parseMarkdown(md, { type: 'page' });
+    assert.equal(item.data.title, 'Just a Title');
+    assert.ok(item.data.body.includes('Some body text here'));
+  });
+
+  it('should handle empty markdown', () => {
+    const item = parseMarkdown('', { type: 'article' });
+    assert.equal(item.data.body, '');
+  });
+
+  it('should use title from frontmatter over heading', () => {
+    const md = `---
+title: FM Title
+---
+
+# Heading Title
+
+Body
+`;
+    const item = parseMarkdown(md, { type: 'article' });
+    assert.equal(item.data.title, 'FM Title');
+  });
+
+  it('should apply default status', () => {
+    const item = parseMarkdown('# Test', { type: 'article', status: 'published' });
+    assert.equal(item.status, 'published');
+  });
+});
+
+describe('Content Import — CSV', () => {
+  it('should parse CSV with headers', () => {
+    const csv = `title,status,author
+First Post,published,Alice
+Second Post,draft,Bob
+Third Post,,Charlie
+`;
+    const items = parseCSV(csv, { type: 'article' });
+    assert.equal(items.length, 3);
+
+    assert.equal(items[0].data.title, 'First Post');
+    assert.equal(items[0].status, 'published');
+    assert.equal(items[0].data.author, 'Alice');
+
+    assert.equal(items[1].data.title, 'Second Post');
+    assert.equal(items[1].status, 'draft');
+
+    assert.equal(items[2].data.title, 'Third Post');
+    assert.equal(items[2].status, 'draft'); // default
+  });
+
+  it('should parse CSV with body column', () => {
+    const csv = `title,body
+Post One,Hello world this is body text
+Post Two,Another body
+`;
+    const items = parseCSV(csv, { type: 'article' });
+    assert.equal(items.length, 2);
+    assert.equal(items[0].data.body, 'Hello world this is body text');
+  });
+
+  it('should handle quoted CSV fields', () => {
+    const csv = `title,body
+"Hello, World","This has a comma, and quotes"
+`;
+    const items = parseCSV(csv, { type: 'article' });
+    assert.equal(items[0].data.title, 'Hello, World');
+    assert.equal(items[0].data.body, 'This has a comma, and quotes');
+  });
+
+  it('should handle empty CSV gracefully', () => {
+    assert.deepEqual(parseCSV('title\n', { type: 'article' }), []);
+    assert.deepEqual(parseCSV('', { type: 'article' }), []);
+  });
+
+  it('should use type from CSV column if available', () => {
+    const csv = `title,type
+Page 1,page
+Post 1,article
+`;
+    const items = parseCSV(csv, { type: 'article' });
+    assert.equal(items[0].type, 'page');
+    assert.equal(items[1].type, 'article');
+  });
+});
+
+describe('Content Import — JSON', () => {
+  it('should parse JSON object with type and data', () => {
+    const json = JSON.stringify({
+      type: 'article',
+      data: { title: 'JSON Post', body: 'Content from JSON' },
+      status: 'published'
+    });
+    const items = parseJSON(json, { type: 'article' });
+    assert.equal(items.length, 1);
+    assert.equal(items[0].type, 'article');
+    assert.equal(items[0].data.title, 'JSON Post');
+    assert.equal(items[0].status, 'published');
+  });
+
+  it('should parse JSON array', () => {
+    const json = JSON.stringify([
+      { type: 'article', data: { title: 'Post 1' } },
+      { type: 'page', data: { title: 'Page 1' }, status: 'published' }
+    ]);
+    const items = parseJSON(json, { type: 'article' });
+    assert.equal(items.length, 2);
+    assert.equal(items[0].data.title, 'Post 1');
+    assert.equal(items[1].data.title, 'Page 1');
+    assert.equal(items[1].type, 'page');
+  });
+
+  it('should auto-wrap plain objects without type field', () => {
+    const json = JSON.stringify([
+      { title: 'Plain Post', body: 'Body text', status: 'published' }
+    ]);
+    const items = parseJSON(json, { type: 'article' });
+    assert.equal(items.length, 1);
+    assert.equal(items[0].type, 'article');
+    assert.equal(items[0].data.title, 'Plain Post');
+    assert.equal(items[0].data.body, 'Body text');
+    assert.equal(items[0].status, 'published');
+  });
+
+  it('should apply default type from opts', () => {
+    const json = JSON.stringify({ title: 'No type field' });
+    const items = parseJSON(json, { type: 'page', status: 'draft' });
+    assert.equal(items[0].type, 'page');
+    assert.equal(items[0].status, 'draft');
+  });
+
+  it('should throw on invalid JSON', () => {
+    assert.throws(() => parseJSON('not json'));
+  });
+});
+
+describe('Content Import — importContent', () => {
+  const Article = createContentType('article', {
+    label: '文章',
+    fields: {
+      title: { type: 'string', required: true, maxLength: 200 },
+      body:  { type: 'json' }
+    }
+  });
+
+  it('should import valid items', async () => {
+    const store = createMemoryStore();
+    const items = [
+      { type: 'article', data: { title: 'First' }, status: 'published' },
+      { type: 'article', data: { title: 'Second' } }
+    ];
+
+    const result = await importContent(store, Article, items);
+    assert.equal(result.imported, 2);
+    assert.equal(result.skipped, 0);
+    assert.equal(result.errors.length, 0);
+  });
+
+  it('should skip invalid items and record errors', async () => {
+    const store = createMemoryStore();
+    const items = [
+      { type: 'article', data: { title: 'Valid' } },
+      { type: 'article', data: {} }  // missing required title
+    ];
+
+    const result = await importContent(store, Article, items);
+    assert.equal(result.imported, 1);
+    assert.equal(result.errors.length, 1);
+    assert.ok(result.errors[0].error.includes('Validation failed'));
+  });
+
+  it('should handle skip conflict strategy', async () => {
+    const store = createMemoryStore();
+    await store.create({ id: 'dup-1', type: 'article', data: { title: 'Original' } });
+
+    const items = [
+      { id: 'dup-1', type: 'article', data: { title: 'Updated' } },
+      { id: 'new-1', type: 'article', data: { title: 'New' } }
+    ];
+
+    const result = await importContent(store, Article, items, { conflictStrategy: 'skip' });
+    assert.equal(result.imported, 1);
+    assert.equal(result.skipped, 1);
+
+    const doc = await store.get('dup-1');
+    assert.equal(doc.data.title, 'Original');
+  });
+
+  it('should handle overwrite conflict strategy', async () => {
+    const store = createMemoryStore();
+    await store.create({ id: 'dup-2', type: 'article', data: { title: 'Original' } });
+
+    const items = [
+      { id: 'dup-2', type: 'article', data: { title: 'Updated' } }
+    ];
+
+    const result = await importContent(store, Article, items, { conflictStrategy: 'overwrite' });
+    assert.equal(result.imported, 1);
+
+    const doc = await store.get('dup-2');
+    assert.equal(doc.data.title, 'Updated');
+  });
+
+  it('should handle merge conflict strategy', async () => {
+    const store = createMemoryStore();
+    await store.create({ id: 'merge-1', type: 'article', data: { title: 'Original', body: 'Old body' } });
+
+    const items = [
+      { id: 'merge-1', type: 'article', data: { body: 'New body' } }
+    ];
+
+    const result = await importContent(store, Article, items, { conflictStrategy: 'merge' });
+    assert.equal(result.imported, 1);
+
+    const doc = await store.get('merge-1');
+    assert.equal(doc.data.title, 'Original'); // preserved
+    assert.equal(doc.data.body, 'New body');   // updated
+  });
+
+  it('should support dry run mode', async () => {
+    const store = createMemoryStore();
+    const items = [
+      { type: 'article', data: { title: 'Dry Run Test' } }
+    ];
+
+    const result = await importContent(store, Article, items, { dryRun: true });
+    assert.equal(result.imported, 1);
+    // Store should be empty
+    const count = await store.count();
+    assert.equal(count, 0);
   });
 });
 

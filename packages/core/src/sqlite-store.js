@@ -101,6 +101,14 @@ export async function createSQLiteStore(config = {}) {
       try { db.run(idx); } catch (e) { /* ignore */ }
     }
 
+    // HA-ready PRAGMAs: WAL mode for better concurrency and Litestream compatibility
+    // Note: sql.js WASM does not produce OS-level WAL files, so Litestream continuous
+    // replication requires migrating to better-sqlite3 for full support.
+    // These pragmas still improve internal SQLite behavior within sql.js.
+    try { db.run('PRAGMA journal_mode=WAL;'); } catch (e) { /* ignore */ }
+    try { db.run('PRAGMA synchronous=NORMAL;'); } catch (e) { /* ignore */ }
+    try { db.run('PRAGMA busy_timeout=5000;'); } catch (e) { /* ignore */ }
+
     await saveToDisk();
 
     return db;

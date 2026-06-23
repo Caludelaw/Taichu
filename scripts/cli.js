@@ -5,6 +5,7 @@
  * npx taichu init          → Create a new Taichu project
  * npx taichu dev            → Start development server
  * npx taichu migrate --from=wordpress --file=dump.xml
+ * npx taichu restore <path> → 恢复数据库备份
  */
 
 import { spawn } from 'node:child_process';
@@ -72,6 +73,10 @@ TAICHU_LOG_LEVEL=info
     await import('./plugin-cli.js');
     break;
 
+  case 'restore':
+    await import('./restore.js');
+    break;
+
   default:
     console.log(`
   ⚡ Taichu CMS CLI
@@ -81,6 +86,7 @@ TAICHU_LOG_LEVEL=info
     npx taichu dev            Start development server
     npx taichu migrate        Import content (WP/Markdown)
     npx taichu plugin         Browse & install plugins
+    npx taichu restore        Restore database from backup
 
   Environment:
     TAICHU_PORT=3120          Server port

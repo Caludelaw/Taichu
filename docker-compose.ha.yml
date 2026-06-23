@@ -1,0 +1,73 @@
+# Taichu CMS — High Availability Docker Compose with Litestream
+#
+# 使用方法：
+#   1. 创建 .env 文件，配置 S3 凭证（见下方说明）
+#   2. docker compose -f docker-compose.ha.yml up -d
+#
+# 环境变量（必填）：
+#   LITESTREAM_ACCESS_KEY_ID     — S3 Access Key
+#   LITESTREAM_SECRET_ACCESS_KEY — S3 Secret Key
+#   LITESTREAM_S3_BUCKET         — S3 存储桶名称
+#   LITESTREAM_S3_REGION         — S3 区域（默认 us-east-1）
+#
+# 恢复数据库：
+#   litestream restore -config litestream.yml /path/to/restored.db
+#   npx taichu restore /path/to/restored.db
+
+services:
+  taichu:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: taichu-cms
+    ports:
+      - "${TAICHU_PORT:-3120}:3120"
+    environment:
+      - NODE_ENV=production
+      - TAICHU_STORAGE=sqlite
+      - TAICHU_PORT=3120
+      - TAICHU_HOST=0.0.0.0
+      - TAICHU_PUBLIC_READ=1
+      - TAICHU_SECRET=${TAICHU_SECRET:-change-me-in-production}
+      - TAICHU_ADMIN_USER=${TAICHU_ADMIN_USER:-admin}
+      - TAICHU_ADMIN_PASS=${TAICHU_ADMIN_PASS:-admin123}
+    volumes:
+      - taichu-data:/app/.taichu
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3120/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - taichu-net
+
+  # Litestream sidecar — continuous SQLite replication to S3
+  litestream:
+    image: litestream/litestream:latest
+    container_name: taichu-litestream
+    depends_on:
+      taichu:
+        condition: service_healthy
+    environment:
+      - LITESTREAM_ACCESS_KEY_ID=${LITESTREAM_ACCESS_KEY_ID}
+      - LITESTREAM_SECRET_ACCESS_KEY=${LITESTREAM_SECRET_ACCESS_KEY}
+      - LITESTREAM_S3_BUCKET=${LITESTREAM_S3_BUCKET:-taichu-backups}
+      - LITESTREAM_S3_REGION=${LITESTREAM_S3_REGION:-us-east-1}
+      - LITESTREAM_S3_ENDPOINT=${LITESTREAM_S3_ENDPOINT:-}
+    volumes:
+      - taichu-data:/data
+      - ./litestream.yml:/etc/litestream.yml:ro
+    command: ["replicate", "-config", "/etc/litestream.yml"]
+    restart: unless-stopped
+    networks:
+      - taichu-net
+
+volumes:
+  taichu-data:
+    driver: local
+
+networks:
+  taichu-net:
+    driver: bridge

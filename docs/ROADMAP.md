@@ -124,7 +124,7 @@
 | CSRF Protection for Admin API | P2 | ✅ Done |
 | Content Import from Markdown/CSV/JSON | P3 | ✅ Done |
 | Federation: Cross-Instance Content Discovery | P3 | ✅ Done |
-| Zero-Config HA: Litestream Integration | P3 | 📋 Todo |
+| Zero-Config HA: Litestream Integration | P3 | ✅ Done |
 
 ## Long-Term Vision
 

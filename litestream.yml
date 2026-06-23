@@ -1,0 +1,38 @@
+# Litestream Configuration — Zero-Config HA for Taichu CMS
+#
+# Litestream continuously replicates your SQLite database to S3-compatible storage,
+# enabling point-in-time recovery and zero-config high availability.
+#
+# Quick Start:
+#   1. Install Litestream: https://litestream.io/install/
+#   2. Set env vars: LITESTREAM_ACCESS_KEY_ID, LITESTREAM_SECRET_ACCESS_KEY
+#   3. Run: litestream replicate -config litestream.yml
+#
+# Full guide: docs/zh/guides/litestream-ha.md
+
+# Access key and secret are read from env vars, not stored in config
+# LITESTREAM_ACCESS_KEY_ID=your-access-key
+# LITESTREAM_SECRET_ACCESS_KEY=your-secret-key
+
+dbs:
+  # Matches the default Taichu SQLite database path
+  - path: /app/.taichu/data/taichu.db
+    replicas:
+      # S3-compatible storage. Supports AWS S3, MinIO, Backblaze B2, etc.
+      - type: s3
+        # Replace with your bucket and region
+        bucket: "${LITESTREAM_S3_BUCKET:-taichu-backups}"
+        path: taichu/db
+        endpoint: "${LITESTREAM_S3_ENDPOINT}"
+        region: "${LITESTREAM_S3_REGION:-us-east-1}"
+        # Sync interval: default 1s. Increase if on low-bandwidth connection
+        sync-interval: "${LITESTREAM_SYNC_INTERVAL:-1s}"
+        # Retention: keep snapshots for 30 days, auto-clean old generations
+        retention: 720h
+        # Snapshot interval: create a full snapshot every 6h
+        snapshot-interval: "${LITESTREAM_SNAPSHOT_INTERVAL:-6h}"
+        # Validation: verify snapshot integrity after each snapshot
+        validation-interval: 12h
+
+  # Optional: replicate WAL index for faster recovery
+  # Litestream manages shadow WAL dirs automatically — no extra config needed

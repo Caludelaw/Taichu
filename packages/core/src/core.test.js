@@ -15,6 +15,14 @@ import { TaichuError, ValidationError, NotFoundError, UnauthorizedError, Forbidd
 import { generateETag, etagMatches, modifiedSince, latestUpdate } from './cache.js';
 import { counterInc, histogramObserve, gaugeSet, recordRequest, generateMetrics, resetMetrics, getGauge, getCounter } from './metrics.js';
 import { registerAgent, unregisterAgent, agentHeartbeat, discoverAgents, listAgents, getAgent, listTags, listTools, validateCapability, generateAgentId, generateAgentToken } from './agent-marketplace.js';
+import {
+  addRemoteInstance, removeRemoteInstance, getRemoteInstance,
+  listRemoteInstances, markInstanceError, instanceHeartbeat,
+  instanceCount, clearInstances,
+  buildWebfingerUrl, buildNodeInfoUrl, buildActorUrl, buildOutboxUrl,
+  discoverCandidates, normalizeActorResponse, normalizeRemoteActivity,
+  normalizeOutboxResponse, normalizeNodeInfo, mapApTypeToTaichu, areTypesCompatible
+} from './federation.js';
 import { createHmac } from 'node:crypto';
 
 // ════════════════════════════════════════════════════════════
@@ -1275,5 +1283,311 @@ describe('Agent Marketplace', () => {
     const t2 = generateAgentToken();
     assert.notEqual(t1, t2);
     assert.ok(t1.startsWith('atok_'));
+  });
+});
+
+// ════════════════════════════════════════════════════════════
+// Federation — Instance Registry
+// ════════════════════════════════════════════════════════════
+
+describe('Federation — Instance Registry', () => {
+  // Reset registry before each test block
+  clearInstances();
+
+  it('should add a remote instance', () => {
+    const inst = addRemoteInstance('https://example.com', 'Example CMS');
+    assert.equal(inst.url, 'https://example.com');
+    assert.equal(inst.name, 'Example CMS');
+    assert.equal(inst.status, 'active');
+    assert.ok(inst.addedAt);
+    assert.ok(inst.lastSeen);
+  });
+
+  it('should normalize trailing slashes', () => {
+    const inst = addRemoteInstance('https://example.com/', 'Slash Instance');
+    assert.equal(inst.url, 'https://example.com');
+  });
+
+  it('should add https:// if missing scheme', () => {
+    const inst = addRemoteInstance('example.org');
+    assert.equal(inst.url, 'https://example.org');
+  });
+
+  it('should reject invalid URLs', () => {
+    assert.throws(() => addRemoteInstance(''), /Invalid instance URL/);
+    assert.throws(() => addRemoteInstance(null), /Invalid instance URL/);
+    assert.throws(() => addRemoteInstance('not a url!'), /Invalid instance URL/);
+  });
+
+  it('should use hostname as name when name not provided', () => {
+    const inst = addRemoteInstance('https://myblog.example.com');
+    assert.ok(inst.name.includes('example.com') || inst.name.includes('myblog'));
+  });
+
+  it('should update existing instance', () => {
+    addRemoteInstance('https://hub.taichu.dev', 'Old Name');
+    const updated = addRemoteInstance('https://hub.taichu.dev', 'New Name', { version: '0.8.0' });
+    assert.equal(updated.name, 'New Name');
+    assert.equal(updated.version, '0.8.0');
+    assert.equal(updated.status, 'active');
+  });
+
+  it('should list registered instances', () => {
+    clearInstances();
+    addRemoteInstance('https://a.example.com', 'Instance A');
+    addRemoteInstance('https://b.example.com', 'Instance B');
+    addRemoteInstance('https://c.example.com', 'Instance C');
+
+    const list = listRemoteInstances();
+    assert.equal(list.length, 3);
+  });
+
+  it('should filter instances by status', () => {
+    clearInstances();
+    addRemoteInstance('https://active.example.com', 'Active');
+    addRemoteInstance('https://error.example.com', 'Error');
+    markInstanceError('https://error.example.com', 'Connection refused');
+
+    const active = listRemoteInstances({ status: 'active' });
+    assert.equal(active.length, 1);
+    assert.equal(active[0].name, 'Active');
+
+    const errors = listRemoteInstances({ status: 'error' });
+    assert.equal(errors.length, 1);
+    assert.equal(errors[0].name, 'Error');
+  });
+
+  it('should filter instances by search query', () => {
+    clearInstances();
+    addRemoteInstance('https://blog.alice.dev', 'Alice Blog');
+    addRemoteInstance('https://blog.bob.dev', 'Bob Blog');
+
+    const result = listRemoteInstances({ search: 'alice' });
+    assert.equal(result.length, 1);
+    assert.equal(result[0].name, 'Alice Blog');
+  });
+
+  it('should get a specific instance', () => {
+    addRemoteInstance('https://target.example.com', 'Target');
+    const inst = getRemoteInstance('https://target.example.com');
+    assert.ok(inst);
+    assert.equal(inst.name, 'Target');
+  });
+
+  it('should return null for unknown instance', () => {
+    assert.equal(getRemoteInstance('https://unknown.example.com'), null);
+  });
+
+  it('should remove an instance', () => {
+    addRemoteInstance('https://remove.example.com', 'Removable');
+    const removed = removeRemoteInstance('https://remove.example.com');
+    assert.equal(removed, true);
+    assert.equal(getRemoteInstance('https://remove.example.com'), null);
+  });
+
+  it('should return false for removing unknown instance', () => {
+    assert.equal(removeRemoteInstance('https://never-added.example.com'), false);
+  });
+
+  it('should mark instance error', () => {
+    addRemoteInstance('https://broken.example.com', 'Broken');
+    markInstanceError('https://broken.example.com', 'Timeout after 10s');
+
+    const inst = getRemoteInstance('https://broken.example.com');
+    assert.equal(inst.status, 'error');
+    assert.equal(inst.error, 'Timeout after 10s');
+  });
+
+  it('should update heartbeat and reactivate', () => {
+    addRemoteInstance('https://recover.example.com', 'Recover');
+    markInstanceError('https://recover.example.com', 'Was down');
+    assert.equal(getRemoteInstance('https://recover.example.com').status, 'error');
+
+    instanceHeartbeat('https://recover.example.com');
+    assert.equal(getRemoteInstance('https://recover.example.com').status, 'active');
+    assert.equal(getRemoteInstance('https://recover.example.com').error, undefined);
+  });
+
+  it('should track instance count', () => {
+    clearInstances();
+    assert.equal(instanceCount(), 0);
+    addRemoteInstance('https://one.example.com');
+    addRemoteInstance('https://two.example.com');
+    assert.equal(instanceCount(), 2);
+  });
+});
+
+// ════════════════════════════════════════════════════════════
+// Federation — Discovery URLs
+// ════════════════════════════════════════════════════════════
+
+describe('Federation — Discovery URLs', () => {
+  it('should build webfinger URL', () => {
+    const url = buildWebfingerUrl('example.com');
+    assert.ok(url.includes('.well-known/webfinger'));
+    assert.ok(url.includes('resource=acct:taichu@'));
+  });
+
+  it('should build webfinger URL with custom username', () => {
+    const url = buildWebfingerUrl('hub.taichu.dev', 'admin');
+    assert.ok(url.includes('acct:admin@'));
+  });
+
+  it('should build nodeinfo URL', () => {
+    const url = buildNodeInfoUrl('example.com');
+    assert.ok(url.includes('.well-known/nodeinfo'));
+  });
+
+  it('should build actor URL', () => {
+    const url = buildActorUrl('example.com');
+    assert.ok(url.includes('/api/activitypub/actor'));
+  });
+
+  it('should build outbox URL', () => {
+    const url = buildOutboxUrl('example.com');
+    assert.ok(url.includes('/api/activitypub/outbox'));
+  });
+
+  it('should generate discovery candidates', () => {
+    const candidates = discoverCandidates('myinstance.com');
+    assert.ok(candidates.length >= 2);
+    assert.ok(candidates.some(c => c.startsWith('https://')));
+    assert.ok(candidates.some(c => c.startsWith('http://')));
+  });
+});
+
+// ════════════════════════════════════════════════════════════
+// Federation — Content Normalization
+// ════════════════════════════════════════════════════════════
+
+describe('Federation — Content Normalization', () => {
+  it('should normalize actor response', () => {
+    const actor = normalizeActorResponse({
+      id: 'https://example.com/actor',
+      type: 'Person',
+      name: 'Test Instance',
+      summary: 'A test CMS',
+      inbox: 'https://example.com/inbox',
+      outbox: 'https://example.com/outbox',
+      followers: 'https://example.com/followers'
+    });
+
+    assert.equal(actor.id, 'https://example.com/actor');
+    assert.equal(actor.name, 'Test Instance');
+    assert.equal(actor.type, 'Person');
+    assert.equal(actor.inbox, 'https://example.com/inbox');
+  });
+
+  it('should handle null actor', () => {
+    assert.equal(normalizeActorResponse(null), null);
+    assert.equal(normalizeActorResponse(undefined), null);
+    assert.equal(normalizeActorResponse('not-object'), null);
+  });
+
+  it('should normalize remote activity', () => {
+    const activity = {
+      id: 'https://rem.example.com/activity/1',
+      type: 'Create',
+      published: '2026-06-23T00:00:00Z',
+      object: {
+        id: 'https://rem.example.com/content/article/abc',
+        type: 'Article',
+        name: 'Hello World',
+        content: 'This is a test article about federation.',
+        published: '2026-06-22T00:00:00Z'
+      }
+    };
+
+    const content = normalizeRemoteActivity(activity, 'https://rem.example.com');
+    assert.equal(content.title, 'Hello World');
+    assert.equal(content.type, 'Article');
+    assert.equal(content.instanceUrl, 'https://rem.example.com');
+    assert.ok(content.summary.includes('federation'));
+  });
+
+  it('should normalize activity without object wrapper', () => {
+    const activity = {
+      id: 'https://rem.example.com/content/article/xyz',
+      type: 'Article',
+      name: 'Direct Activity',
+      content: 'No object wrapper'
+    };
+
+    const content = normalizeRemoteActivity(activity, 'https://rem.example.com');
+    assert.equal(content.title, 'Direct Activity');
+  });
+
+  it('should normalize outbox response', () => {
+    const outbox = {
+      type: 'OrderedCollection',
+      totalItems: 2,
+      orderedItems: [
+        {
+          type: 'Create',
+          object: { id: 'a1', type: 'Article', name: 'Post 1' }
+        },
+        {
+          type: 'Create',
+          object: { id: 'a2', type: 'Article', name: 'Post 2', content: 'Body 2' }
+        }
+      ]
+    };
+
+    const items = normalizeOutboxResponse(outbox, 'https://hub.example.com');
+    assert.equal(items.length, 2);
+    assert.equal(items[0].title, 'Post 1');
+    assert.equal(items[1].title, 'Post 2');
+  });
+
+  it('should handle empty outbox', () => {
+    assert.deepEqual(normalizeOutboxResponse(null, ''), []);
+    assert.deepEqual(normalizeOutboxResponse({}, ''), []);
+  });
+
+  it('should normalize nodeinfo', () => {
+    const ni = normalizeNodeInfo({
+      version: '2.0',
+      software: { name: 'taichu', version: '0.8.0' },
+      protocols: ['activitypub'],
+      openRegistrations: false,
+      metadata: { nodeName: 'My Taichu' }
+    });
+
+    assert.equal(ni.software.name, 'taichu');
+    assert.equal(ni.software.version, '0.8.0');
+    assert.deepEqual(ni.protocols, ['activitypub']);
+  });
+
+  it('should handle null nodeinfo', () => {
+    assert.equal(normalizeNodeInfo(null), null);
+  });
+});
+
+// ════════════════════════════════════════════════════════════
+// Federation — Type Mapping
+// ════════════════════════════════════════════════════════════
+
+describe('Federation — Type Mapping', () => {
+  it('should map Article to article', () => {
+    assert.equal(mapApTypeToTaichu('Article'), 'article');
+  });
+
+  it('should map Note to article', () => {
+    assert.equal(mapApTypeToTaichu('Note'), 'article');
+  });
+
+  it('should map Image to media', () => {
+    assert.equal(mapApTypeToTaichu('Image'), 'media');
+  });
+
+  it('should map unknown type to article', () => {
+    assert.equal(mapApTypeToTaichu('UnknownType'), 'article');
+  });
+
+  it('should detect compatible types', () => {
+    assert.equal(areTypesCompatible('article', 'article'), true);
+    assert.equal(areTypesCompatible('page', 'page'), true);
+    assert.equal(areTypesCompatible('article', 'page'), true); // article is universal
+    assert.equal(areTypesCompatible('page', 'media'), false);
   });
 });

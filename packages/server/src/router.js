@@ -26,6 +26,7 @@ import { themeRoutes } from './routes/theme.js';
 import { rssSitemapRoutes } from './routes/rss.js';
 import { exportRoutes } from './routes/export.js';
 import { importRoutes } from './routes/import.js';
+import { federationRoutes } from './routes/federation.js';
 import { serveStatic } from './static.js';
 import { createMediaStore } from './media-store.js';
 import { renderTheme, serveThemeAsset } from './theme-engine.js';
@@ -212,6 +213,11 @@ export async function router(ctx) {
   if (pathname.startsWith('/api/import')) {
     const handled = await importRoutes(ctx);
     if (handled) return;
+  }
+
+  // Federation — Cross-Instance Content Discovery
+  if (pathname.startsWith('/api/federation')) {
+    return federationRoutes(ctx);
   }
 
   // RSS & Sitemap

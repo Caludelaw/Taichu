@@ -15,9 +15,10 @@ COPY packages/core/package.json packages/core/
 COPY packages/server/package.json packages/server/
 COPY packages/mcp/package.json packages/mcp/
 COPY packages/admin/package.json packages/admin/
+COPY packages/llm-providers/package.json packages/llm-providers/
 
-# Install dependencies
-RUN npm install --omit=dev 2>/dev/null || npm install
+# Install dependencies (ignore-scripts to skip prepare hook in non-git context)
+RUN npm install --omit=dev --ignore-scripts || npm install --ignore-scripts
 
 # Copy source
 COPY . .

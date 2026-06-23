@@ -22,8 +22,9 @@ const hookFiles = readdirSync(srcDir)
   .filter(f => f.endsWith('.sh') || f === 'pre-commit');
 
 if (!existsSync(hooksDir)) {
-  console.error('No .git/hooks directory found. Are you in the repo root?');
-  process.exit(1);
+  // Not a git repository (e.g., Docker build, CI), skip silently
+  console.log('No .git/hooks directory — skipping hook setup (non-repo environment)');
+  process.exit(0);
 }
 
 let installed = 0;

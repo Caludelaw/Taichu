@@ -217,6 +217,7 @@ function getDefaultSettings() {
     gonganNumber: '',
     analyticsId: '',
     language: 'zh-CN',
-    timezone: 'Asia/Shanghai'
+    timezone: 'Asia/Shanghai',
+    theme: { activeTheme: 'default' }
   };
 }

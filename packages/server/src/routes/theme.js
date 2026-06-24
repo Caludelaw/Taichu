@@ -24,10 +24,15 @@ const BUILT_IN_THEMES = [
 ];
 
 /**
- * Get active theme name from settings or default.
+ * Get active theme name from persisted site_settings.
  */
-function getActiveTheme(store) {
-  return store?._settings?.theme || 'default';
+async function getActiveTheme(store) {
+  try {
+    const docs = await store.list({ type: 'site_settings', limit: 1 });
+    return docs[0]?.data?.theme?.activeTheme || 'default';
+  } catch {
+    return 'default';
+  }
 }
 
 export async function themeRoutes(ctx) {
@@ -44,7 +49,7 @@ export async function themeRoutes(ctx) {
       });
     }
 
-    const activeTheme = 'default'; // TODO: read from settings
+    const activeTheme = await getActiveTheme(ctx.store);
     const all = BUILT_IN_THEMES.map(t => ({
       ...t,
       active: t.name === activeTheme
@@ -79,11 +84,22 @@ export async function themeRoutes(ctx) {
       ctx.res.end(JSON.stringify({ error: 'Theme not found' }));
       return;
     }
-    // Store active theme in settings (simplified: write to env or config)
+    // Persist active theme to site_settings document
     try {
       const store = ctx.store;
-      if (store && store._settings !== undefined) store._settings = store._settings || {};
-      if (store) store._settings = { ...(store._settings || {}), theme: name };
+      const docs = await store.list({ type: 'site_settings', limit: 1 });
+      const existing = docs[0];
+
+      if (existing) {
+        const merged = { ...existing.data, theme: { ...(existing.data.theme || {}), activeTheme: name } };
+        await store.update(existing.id, { data: merged });
+      } else {
+        await store.create({
+          type: 'site_settings',
+          data: { theme: { activeTheme: name } }
+        });
+      }
+
       ctx.res.writeHead(200, { 'Content-Type': 'application/json' });
       ctx.res.end(JSON.stringify({ success: true, active: name }));
     } catch (e) {

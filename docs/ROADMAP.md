@@ -109,7 +109,7 @@
 | Performance Optimization (lazy load, chunk split) | P3 | ✅ Done |
 | Aliyun Docker Mirror Auto-Publish | P3 | ✅ Done |
 
-## v0.8.0 (Current) — Production Hardening & Ecosystem Depth
+## v0.8.0 ✅ RELEASED (2026-06-24) — Production Hardening & Ecosystem Depth
 
 **Goal**: Production readiness, observability, and deeper agent ecosystem integration.
 
@@ -125,6 +125,31 @@
 | Content Import from Markdown/CSV/JSON | P3 | ✅ Done |
 | Federation: Cross-Instance Content Discovery | P3 | ✅ Done |
 | Zero-Config HA: Litestream Integration | P3 | ✅ Done |
+
+## v0.9.0 (Current) — Quality & Production Maturity
+
+**Goal**: Fix critical bugs, improve test coverage, complete i18n, and enhance admin UX quality.
+
+| Feature | Priority | Status |
+|---------|----------|--------|
+| Theme Persistence (activeTheme hardcoded → store-backed) | P0 | ⬜ Todo |
+| Agent API Key Lookup Optimization (O(n)→O(1)) | P0 | ⬜ Todo |
+| MCP Server Version Consistency | P0 | ⬜ Todo |
+| Admin Badge Dark Mode CSS Variables | P0 | ⬜ Todo |
+| Test Coverage: sm-crypto, MCP, WebSocket, scheduler, webhook, plugin-manager | P1 | ⬜ Todo |
+| Admin i18n Completion (10+ untranslated views) | P1 | ⬜ Todo |
+| SQLite JSON.parse Error Handling | P1 | ⬜ Todo |
+| CORS Origin Configuration (TAICHU_CORS_ORIGIN env) | P1 | ⬜ Todo |
+| Admin Icon System (emoji → SVG icons) | P1 | ⬜ Todo |
+| Content Preview in Admin | P2 | ⬜ Todo |
+| Revisions Diff Viewer UI | P2 | ⬜ Todo |
+| Drag-and-Drop Content Ordering | P2 | ⬜ Todo |
+| Batch GET API Endpoint | P2 | ⬜ Todo |
+| Federation Registry Persistence (memory → store) | P2 | ⬜ Todo |
+| Rate Limiter Persistence (memory → store-backed) | P2 | ⬜ Todo |
+| better-sqlite3 Migration (full Litestream HA support) | P3 | ⬜ Todo |
+| API Versioning Strategy | P3 | ⬜ Todo |
+| Load/Stress Testing Framework | P3 | ⬜ Todo |
 
 ## Long-Term Vision
 

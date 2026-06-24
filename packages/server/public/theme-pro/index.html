@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="auto">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title data-taichu="siteName">Taichu</title>
+<meta name="description" content="">
+<link rel="stylesheet" href="/theme/style.css">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="alternate" type="application/rss+xml" href="/rss.xml" title="RSS">
+<!-- Open Graph -->
+<meta property="og:title" content="">
+<meta property="og:type" content="website">
+<meta property="og:url" content="">
+<meta property="og:image" content="">
+<meta property="og:description" content="">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+<body>
+<header class="site-header">
+  <div class="header-inner">
+    <a href="/" class="site-logo">Taichu</a>
+    <nav class="site-nav" id="nav"></nav>
+    <button class="theme-toggle" onclick="toggleTheme()" title="切换主题" id="theme-btn">🌙</button>
+  </div>
+</header>
+
+<main class="site-main" id="main"></main>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <p>Powered by <a href="https://github.com/Caludelaw/Taichu" target="_blank" rel="noopener">Taichu CMS</a> — AI Agent-Native Content Infrastructure</p>
+    <p><a href="/rss.xml">RSS</a> · <a href="/admin/">Admin</a></p>
+    <p id="icp"></p>
+  </div>
+</footer>
+
+<script>
+/* ═══════════════════════════════════════════════════
+   Taichu Design System v1.0 — Pro Theme Engine
+   Zero-dependency, semantic HTML, Agent-friendly.
+   ═══════════════════════════════════════════════════ */
+(function() {
+var G = window.__TAICHU__ || {};
+
+/* ── Init ─────────────────────────────────────────── */
+document.title = G.site?.name || 'Taichu';
+document.documentElement.lang = G.site?.language || 'zh-CN';
+document.querySelectorAll('[data-taichu=siteName]').forEach(function(el){ el.textContent = G.site?.name || 'Taichu'; });
+
+/* ICP */
+var icpEl = document.getElementById('icp');
+if (icpEl && G.site?.icp) {
+  icpEl.innerHTML = '<a href="https://beian.miit.gov.cn" target="_blank" rel="noopener">'+G.site.icp+'</a>' + (G.site.gongan ? ' | '+G.site.gongan : '');
+}
+
+/* Theme config */
+var theme = G.theme || {};
+var rs = document.documentElement.style;
+if (theme.primaryColor) rs.setProperty('--primary', theme.primaryColor);
+if (theme.fontFamily) rs.setProperty('--font-sans', theme.fontFamily);
+if (theme.fontSize) rs.setProperty('--text-base', theme.fontSize);
+if (theme.maxWidth) rs.setProperty('--max-width', theme.maxWidth);
+if (theme.customCSS) { var s = document.createElement('style'); s.textContent = theme.customCSS; document.head.appendChild(s); }
+
+/* ── Dark Mode ────────────────────────────────────── */
+var THEME_KEY = 'taichu_theme';
+function getTheme() {
+  var saved = localStorage.getItem(THEME_KEY);
+  if (saved === 'light' || saved === 'dark') return saved;
+  return 'auto';
+}
+function applyTheme(mode) {
+  document.documentElement.setAttribute('data-theme', mode);
+  var btn = document.getElementById('theme-btn');
+  if (btn) {
+    var isDark = mode === 'dark' || (mode === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    btn.textContent = isDark ? '☀️' : '🌙';
+  }
+}
+function toggleTheme() {
+  var current = getTheme();
+  var next = current === 'auto' ? 'dark' : current === 'dark' ? 'light' : 'auto';
+  localStorage.setItem(THEME_KEY, next);
+  applyTheme(next);
+}
+applyTheme(getTheme());
+
+/* ── API ──────────────────────────────────────────── */
+function api(path) { return fetch('/api'+path).then(function(r){ return r.json() }); }
+function getPage() { var m = location.search.match(/page=(\d+)/); return m ? parseInt(m[1]) : 1; }
+var PAGE_SIZE = 10;
+
+/* ── Pagination HTML ──────────────────────────────── */
+function paginationHTML(page, total, prefix) {
+  var pages = Math.ceil(total / PAGE_SIZE);
+  if (pages <= 1) return '';
+  prefix = prefix || '?';
+  var h = '<nav class="pagination" aria-label="分页导航">';
+  h += page > 1 ? '<a href="'+prefix+'page='+(page-1)+'" class="btn btn-outline btn-page">&larr; 上一页</a>' : '<span class="btn btn-outline btn-page disabled">&larr; 上一页</span>';
+  h += '<span class="page-info">第 '+page+' / '+pages+' 页 (共 '+total+' 篇)</span>';
+  h += page < pages ? '<a href="'+prefix+'page='+(page+1)+'" class="btn btn-outline btn-page">下一页 &rarr;</a>' : '<span class="btn btn-outline btn-page disabled">下一页 &rarr;</span>';
+  h += '</nav>';
+  return h;
+}
+
+/* ── Router ───────────────────────────────────────── */
+function route() {
+  var p = location.pathname;
+  if (p === '/' || p === '') return renderHome();
+  if (p.startsWith('/post/')) return renderPost(p.split('/post/')[1]);
+  if (p.startsWith('/page/')) return renderPage(p.split('/page/')[1]);
+  if (p.startsWith('/tag/')) return renderTag(p.split('/tag/')[1]);
+  if (p === '/search') return renderSearch();
+  render404();
+}
+
+/* ── Navigation ───────────────────────────────────── */
+function buildNav(navItems, categories, pages) {
+  var nav = document.getElementById('nav');
+  var h = '<a href="/" class="active">首页</a>';
+  (navItems||[]).forEach(function(item){
+    h += '<a href="'+escAttr(item.data?.url||'#')+'"'+(item.data?.target==='_blank'?' target="_blank" rel="noopener"':'')+'>'+escHtml(item.data?.title||'')+'</a>';
+  });
+  if (!navItems || !navItems.length) {
+    (categories||[]).forEach(function(c){
+      h += '<a href="/tag/'+(c.data?.slug||c.data?.name||c.id)+'">'+escHtml(c.data?.name||c.id)+'</a>';
+    });
+    (pages||[]).forEach(function(p){
+      h += '<a href="/page/'+(p.data?.slug||p.id)+'">'+escHtml(p.data?.title||p.id)+'</a>';
+    });
+  }
+  h += '<a href="/search">🔍</a>';
+  nav.innerHTML = h;
+}
+
+/* ── Home ─────────────────────────────────────────── */
+function renderHome() {
+  var main = document.getElementById('main');
+  var page = getPage();
+  var offset = (page - 1) * PAGE_SIZE;
+  main.innerHTML = '<div class="loading">加载中...</div>';
+
+  Promise.all([
+    api('/content/article?status=published&limit='+PAGE_SIZE+'&offset='+offset),
+    api('/content/article?status=published&limit=1'),
+    api('/content/navigation?limit=20'),
+    api('/content/category?limit=20')
+  ]).then(function(res){
+    var articles = res[0].docs || [];
+    var total = res[1].total || 0;
+    var navItems = (res[2].docs||[]).sort(function(a,b){ return (a.data?.order||0)-(b.data?.order||0) });
+    var categories = res[3].docs || [];
+    buildNav(navItems, categories, []);
+
+    if (!articles.length && page === 1) {
+      main.innerHTML = '<div class="hero"><h1>'+escHtml(G.site?.name||'Taichu')+'</h1><p>'+escHtml(G.site?.description||'AI Agent-Native 内容管理系统')+'</p></div><div class="empty"><h2>👋 欢迎</h2><p>还没有文章。去 <a href="/admin/">管理后台</a> 写第一篇。</p></div>';
+      return;
+    }
+    var html = '<div class="post-list">';
+    articles.forEach(function(a, i){
+      var ex = excerpt(a.data?.body);
+      var featured = i === 0 && page === 1 ? ' featured' : '';
+      var cover = a.data?.coverImage ? '<div class="post-card-cover"><img src="'+escAttr(a.data.coverImage)+'" alt="" loading="lazy"></div>' : '';
+      var cat = a.data?.category ? '<span class="post-card-category">'+escHtml(a.data.category)+'</span>' : '';
+      html += '<article class="post-card'+featured+'" itemscope itemtype="https://schema.org/Article">'+cover+cat+'<h2 itemprop="headline"><a href="/post/'+(a.data?.slug||a.id)+'" itemprop="url">'+escHtml(a.data?.title||'无标题')+'</a></h2><div class="post-card-meta"><time datetime="'+a.updatedAt+'" itemprop="datePublished">'+fmtDate(a.updatedAt)+'</time></div><p class="post-card-excerpt" itemprop="description">'+ex+'</p></article>';
+    });
+    html += '</div>';
+    html += paginationHTML(page, total, '?');
+    main.innerHTML = html;
+  }).catch(function(e){ main.innerHTML = '<p class="error">加载失败</p>'; console.error(e); });
+}
+
+/* ── Post ─────────────────────────────────────────── */
+function renderPost(slug) {
+  var main = document.getElementById('main');
+  main.innerHTML = '<div class="loading">加载中...</div>';
+  api('/content/article?limit=200').then(function(data){
+    var docs = data.docs || [];
+    var doc = docs.find(function(d){ return d.data?.slug === slug });
+    if (!doc) { render404(); return; }
+
+    var readingTime = Math.max(1, Math.ceil(plainLength(doc.data?.body) / 400));
+    var category = doc.data?.category || doc.data?.tags?.[0] || '';
+    var tags = (doc.data?.tags||[]).map(function(t){ return '<a href="/tag/'+escAttr(t)+'" class="tag">'+escHtml(t)+'</a>'; }).join('');
+
+    var prevIdx = docs.indexOf(doc) + 1;
+    var nextIdx = docs.indexOf(doc) - 1;
+    var prevLink = nextIdx >= 0 ? '<a href="/post/'+(docs[nextIdx].data?.slug||docs[nextIdx].id)+'">&larr; '+escHtml(docs[nextIdx].data?.title||'')+'</a>' : '';
+    var nextLink = prevIdx < docs.length ? '<a href="/post/'+(docs[prevIdx].data?.slug||docs[prevIdx].id)+'">'+escHtml(docs[prevIdx].data?.title||'')+' &rarr;</a>' : '';
+
+    var html = '<article itemscope itemtype="https://schema.org/Article">';
+    html += '<div class="post-single-header">';
+    if (category) html += '<a href="/tag/'+escAttr(category)+'" class="post-card-category">'+escHtml(category)+'</a>';
+    html += '<h1 itemprop="headline">'+escHtml(doc.data?.title||'')+'</h1>';
+    html += '<div class="post-meta-bar">';
+    if (doc.data?.author) html += '<span class="author" itemprop="author">'+escHtml(doc.data.author)+'</span>';
+    html += '<time datetime="'+doc.updatedAt+'" itemprop="datePublished">'+fmtDate(doc.updatedAt)+'</time>';
+    html += '<span class="reading-time">'+readingTime+' 分钟阅读</span>';
+    html += '</div></div>';
+    html += '<div class="post-body" itemprop="articleBody">'+renderBody(doc.data?.body)+'</div>';
+    if (tags) html += '<div class="post-tags">'+tags+'</div>';
+    html += '<nav class="post-nav" aria-label="文章导航">'+prevLink+nextLink+'</nav>';
+    html += '</article>';
+
+    document.title = (doc.data?.title||'') + ' — ' + (G.site?.name||'Taichu');
+    main.innerHTML = html;
+
+    // Comments
+    if (G.theme?.commentsEnabled !== false) {
+      setTimeout(function(){ loadComments(doc.id); }, 50);
+    }
+  }).catch(function(e){ main.innerHTML = '<p class="error">加载失败</p>'; });
+}
+
+/* ── Page ─────────────────────────────────────────── */
+function renderPage(slug) {
+  var main = document.getElementById('main');
+  main.innerHTML = '<div class="loading">加载中...</div>';
+  api('/content/page?limit=100').then(function(data){
+    var docs = data.docs || [];
+    var doc = docs.find(function(d){ return d.data?.slug === slug });
+    if (!doc) { render404(); return; }
+    main.innerHTML = '<article><div class="post-single-header"><h1>'+escHtml(doc.data?.title||'')+'</h1></div><div class="post-body">'+renderBody(doc.data?.body)+'</div></article>';
+    document.title = (doc.data?.title||'') + ' — ' + (G.site?.name||'Taichu');
+  });
+}
+
+/* ── Tag ──────────────────────────────────────────── */
+function renderTag(tag) {
+  var main = document.getElementById('main');
+  main.innerHTML = '<div class="loading">加载中...</div>';
+  api('/content/article?status=published&limit=100').then(function(data){
+    var articles = (data.docs||[]).filter(function(a){ return (a.data?.tags||[]).some(function(t){ return t.toLowerCase() === tag.toLowerCase() }); });
+    var html = '<div class="post-single-header"><h1>🏷️ '+escHtml(tag)+'</h1></div>';
+    if (!articles.length) { html += '<p class="empty">该标签下暂无文章</p>'; }
+    else {
+      html += '<div class="post-list">';
+      articles.forEach(function(a){
+        var ex = excerpt(a.data?.body);
+        html += '<article class="post-card"><h2><a href="/post/'+(a.data?.slug||a.id)+'">'+escHtml(a.data?.title||'')+'</a></h2><div class="post-card-meta"><time>'+fmtDate(a.updatedAt)+'</time></div><p class="post-card-excerpt">'+ex+'</p></article>';
+      });
+      html += '</div>';
+    }
+    main.innerHTML = html;
+  });
+}
+
+/* ── Search ────────────────────────────────────────── */
+function renderSearch() {
+  var main = document.getElementById('main');
+  var q = (new URL(location.href)).searchParams.get('q') || '';
+  main.innerHTML = '<h1>🔍 搜索</h1><form onsubmit="event.preventDefault();location.href=\'/search?q=\'+encodeURIComponent(this.q.value)" class="search-form"><input name="q" value="'+escAttr(q)+'" class="input" placeholder="输入关键词..." autofocus><button class="btn btn-primary">搜索</button></form><div id="search-results"></div>';
+  if (!q) return;
+  document.getElementById('search-results').innerHTML = '<div class="loading">搜索中...</div>';
+  api('/search?q='+encodeURIComponent(q)).then(function(data){
+    var docs = data.docs || [];
+    var r = document.getElementById('search-results');
+    if (!docs.length) { r.innerHTML = '<p class="empty">未找到相关结果</p>'; return; }
+    var html = '<div class="post-list">';
+    docs.forEach(function(d){
+      var ex = excerpt(d.data?.body);
+      html += '<article class="post-card"><h2><a href="/post/'+(d.data?.slug||d.id)+'">'+escHtml(d.data?.title||'')+' <span class="badge badge-primary">'+Math.round(d._score*100)+'%</span></a></h2><p class="post-card-excerpt">'+ex+'</p></article>';
+    });
+    html += '</div>';
+    r.innerHTML = html;
+  });
+}
+
+/* ── 404 ──────────────────────────────────────────── */
+function render404() {
+  document.title = '404 — ' + (G.site?.name||'Taichu');
+  document.getElementById('main').innerHTML = '<div class="empty"><h2>404</h2><p>页面未找到</p><a href="/" class="btn btn-primary">返回首页</a></div>';
+}
+
+/* ── Body Renderer (TipTap JSON → HTML) ───────────── */
+function renderBody(body) {
+  if (!body) return '';
+  if (typeof body === 'string') return '<p>'+escHtml(body)+'</p>';
+  if (body.type === 'doc' && Array.isArray(body.content)) return body.content.map(renderNode).join('');
+  if (body.text) return '<p>'+escHtml(String(body.text))+'</p>';
+  return '';
+}
+function renderNode(node) {
+  if (!node) return '';
+  var text = '';
+  if (node.content) text = node.content.map(renderNode).join('');
+  else if (node.text) text = escHtml(String(node.text));
+  if (node.marks) {
+    node.marks.forEach(function(m){
+      if (m.type === 'bold') text = '<strong>'+text+'</strong>';
+      if (m.type === 'italic') text = '<em>'+text+'</em>';
+      if (m.type === 'code') text = '<code>'+text+'</code>';
+      if (m.type === 'link') text = '<a href="'+escAttr(m.attrs?.href||'#')+'" target="_blank" rel="noopener">'+text+'</a>';
+      if (m.type === 'strike') text = '<s>'+text+'</s>';
+    });
+  }
+  switch (node.type) {
+    case 'paragraph': return '<p>'+text+'</p>';
+    case 'heading': return '<h'+(node.attrs?.level||2)+'>'+text+'</h'+(node.attrs?.level||2)+'>';
+    case 'bulletList': return '<ul>'+text+'</ul>';
+    case 'orderedList': return '<ol>'+text+'</ol>';
+    case 'listItem': return '<li>'+text+'</li>';
+    case 'blockquote': return '<blockquote>'+text+'</blockquote>';
+    case 'codeBlock': return '<pre><code>'+text+'</code></pre>';
+    case 'horizontalRule': return '<hr>';
+    case 'image': return '<img src="'+escAttr(node.attrs?.src||'')+'" alt="'+escAttr(node.attrs?.alt||'')+'" loading="lazy">';
+    default: return text;
+  }
+}
+
+/* ── Comments ─────────────────────────────────────── */
+function loadComments(postId) {
+  var main = document.getElementById('main');
+  var html = '<section class="comments-section" aria-label="评论"><h3>💬 评论</h3>';
+  html += '<div id="comments-list"><div class="loading">加载中...</div></div>';
+  html += '<form class="comment-form" onsubmit="return submitComment(event, \''+postId+'\')">';
+  html += '<input name="author" placeholder="昵称 (必填)" required class="input" maxlength="100">';
+  html += '<input name="email" placeholder="邮箱 (选填)" type="email" class="input">';
+  html += '<textarea name="body" placeholder="写评论..." required class="textarea" maxlength="5000"></textarea>';
+  html += '<button type="submit" class="btn btn-primary btn-sm">提交</button>';
+  html += '<p class="form-hint" id="comment-hint"></p>';
+  html += '</form></section>';
+  main.innerHTML += html;
+
+  api('/content/comment?status=approved&limit=50').then(function(data){
+    var comments = (data.docs||[]).filter(function(c){ return c.data?.postId === postId && !c.data?.parentId });
+    var list = document.getElementById('comments-list');
+    if (!comments.length) { list.innerHTML = '<p class="empty">暂无评论，来写第一条吧</p>'; return; }
+    var h = '';
+    comments.forEach(function(c){
+      h += '<div class="comment-item" itemscope itemtype="https://schema.org/Comment"><div class="comment-header"><span class="comment-author" itemprop="author">'+escHtml(c.data?.author||'匿名')+'</span><time class="comment-time" itemprop="dateCreated">'+fmtDate(c.createdAt)+'</time></div><div class="comment-body" itemprop="text">'+escHtml(c.data?.body)+'</div></div>';
+    });
+    list.innerHTML = h;
+  });
+}
+
+function submitComment(event, postId) {
+  event.preventDefault();
+  var form = event.target;
+  var hint = document.getElementById('comment-hint');
+  hint.textContent = '提交中...';
+  fetch('/api/content/comment', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ postId: postId, author: form.author.value.trim(), email: form.email.value.trim(), body: form.body.value.trim() })
+  }).then(function(r){ return r.json() }).then(function(){
+    hint.textContent = '✅ 评论已提交，审核后显示';
+    form.reset();
+  }).catch(function(e){ hint.textContent = '❌ 提交失败'; });
+  return false;
+}
+
+/* ── Utils ────────────────────────────────────────── */
+function excerpt(body) {
+  if (!body) return '';
+  if (typeof body === 'string') return body.replace(/<[^>]+>/g,'').substring(0,240);
+  if (body.text) return escHtml(String(body.text)).substring(0,240);
+  if (body.content) return body.content.map(function(n){ return n.text||'' }).join(' ').substring(0,240);
+  return '';
+}
+function plainLength(body) {
+  if (!body) return 0;
+  if (typeof body === 'string') return body.replace(/<[^>]+>/g,'').length;
+  if (body.text) return String(body.text).length;
+  if (body.content) return body.content.map(function(n){ return n.text||'' }).join(' ').length;
+  return 0;
+}
+function fmtDate(d) { if (!d) return ''; return new Date(d).toLocaleDateString('zh-CN',{year:'numeric',month:'long',day:'numeric'}); }
+function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function escAttr(s) { return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+/* ── Boot ─────────────────────────────────────────── */
+route();
+})();
+</script>
+</body>
+</html>

@@ -20,7 +20,8 @@ const PUBLIC_THEME_DIR = join(import.meta.dirname, '..', 'public');
 // Built-in themes
 const BUILT_IN_THEMES = [
   { name: 'default', label: '默认博客主题', description: 'Taichu 内置简洁博客主题，支持文章/页面/分类/搜索/分页', active: true, builtin: true },
-  { name: 'theme-minimal', label: '极简主题', description: '衬线字体 + 留白布局，适合个人博客和作品集', active: false, builtin: true, dir: 'theme-minimal' }
+  { name: 'theme-minimal', label: '极简主题', description: '衬线字体 + 留白布局，适合个人博客和作品集', active: false, builtin: true, dir: 'theme-minimal' },
+  { name: 'theme-pro', label: 'Pro 主题 (设计系统)', description: 'Taichu 设计系统 v1.0 — 暗色模式、排版体系、语义 HTML、Agent 友好', active: false, builtin: true, dir: 'theme-pro' }
 ];
 
 /**

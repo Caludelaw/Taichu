@@ -1,6 +1,6 @@
 {
   "name": "@claudelaw/taichu",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "private": false,
   "description": "AI Agent-Native CMS — content infrastructure built for the agent era",
   "workspaces": [

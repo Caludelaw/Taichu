@@ -3,11 +3,13 @@
 ## Docker
 
 ```bash
-docker pull registry.cn-hangzhou.aliyuncs.com/caludelaw/taichu:latest
+docker pull claudelaw/taichu:latest
 docker run -d -p 3120:3120 -v taichu-data:/app/.taichu \
   -e TAICHU_STORAGE=sqlite \
+  -e TAICHU_PUBLIC_READ=1 \
   --name taichu \
-  registry.cn-hangzhou.aliyuncs.com/caludelaw/taichu:latest
+  --restart unless-stopped \
+  claudelaw/taichu:latest
 ```
 
 ## 阿里云 ECS

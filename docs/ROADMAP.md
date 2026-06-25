@@ -133,7 +133,7 @@
 | Feature | Priority | Status |
 |---------|----------|--------|
 | Theme Persistence (activeTheme hardcoded → store-backed) | P0 | ✅ Done |
-| Agent API Key Lookup Optimization (O(n)→O(1)) | P0 | ⬜ Todo |
+| Agent API Key Lookup Optimization (O(n)→O(1)) | P0 | ✅ Done |
 | MCP Server Version Consistency | P0 | ⬜ Todo |
 | Admin Badge Dark Mode CSS Variables | P0 | ⬜ Todo |
 | Test Coverage: sm-crypto, MCP, WebSocket, scheduler, webhook, plugin-manager | P1 | ⬜ Todo |

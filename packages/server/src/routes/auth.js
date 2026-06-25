@@ -133,6 +133,7 @@ export async function authRoutes(ctx) {
     const keyScopes = (Array.isArray(scopes) && scopes.length > 0) ? scopes : ['*:read'];
 
     await ctx.store.create({
+      id: `api_key:${apiKey.prefix}`,
       type: 'api_key',
       data: {
         prefix: apiKey.prefix,
@@ -192,8 +193,15 @@ export async function authRoutes(ctx) {
     ctx.actor = authResult.actor;
 
     const prefix = keyMatch[1];
-    const keys = await ctx.store.list({ type: 'api_key', status: 'active' });
-    const myKey = keys.find(k => k.data.prefix === prefix && k.data.ownerId === ctx.actor.id);
+
+    // O(1) lookup via deterministic document ID
+    let myKey = await ctx.store.get(`api_key:${prefix}`);
+
+    // Backward compatibility: fallback to O(n) for old keys without ID prefix
+    if (!myKey) {
+      const keys = await ctx.store.list({ type: 'api_key', status: 'active' });
+      myKey = keys.find(k => k.data.prefix === prefix && k.data.ownerId === ctx.actor.id);
+    }
 
     if (!myKey) {
       ctx.res.writeHead(404, { 'Content-Type': 'application/json' });

@@ -95,23 +95,37 @@ export async function requireAuth(ctx) {
   // ── API Key Auth (Agent) ──
   if (agentKey) {
     const store = getStore();
-    const keys = await store.list({ type: 'api_key', status: 'active' });
 
-    for (const keyDoc of keys) {
-      if (verifyAPIKey(agentKey, keyDoc.data.hash)) {
-        const scopes = keyDoc.data.scopes || ['*:*']; // default: full access for legacy keys
-        return {
-          authenticated: true,
-          actor: {
-            id: keyDoc.data.ownerId || `agent_${keyDoc.data.prefix}`,
-            type: 'agent',
-            role: 'agent',
-            keyPrefix: keyDoc.data.prefix,
-            label: keyDoc.data.label,
-            scopes
-          }
-        };
+    // Extract prefix for O(1) lookup: "taichu_<8 hex>" = 14 chars
+    const prefix = agentKey.length >= 14 ? agentKey.substring(0, 14) : agentKey;
+
+    // Try O(1) direct lookup via deterministic document ID
+    let keyDoc = await store.get(`api_key:${prefix}`);
+
+    // Backward compatibility: fallback to O(n) for old keys without ID prefix
+    if (!keyDoc) {
+      const keys = await store.list({ type: 'api_key', status: 'active' });
+      for (const doc of keys) {
+        if (verifyAPIKey(agentKey, doc.data.hash)) {
+          keyDoc = doc;
+          break;
+        }
       }
+    }
+
+    if (keyDoc && keyDoc.status === 'active' && verifyAPIKey(agentKey, keyDoc.data.hash)) {
+      const scopes = keyDoc.data.scopes || ['*:*'];
+      return {
+        authenticated: true,
+        actor: {
+          id: keyDoc.data.ownerId || `agent_${keyDoc.data.prefix}`,
+          type: 'agent',
+          role: 'agent',
+          keyPrefix: keyDoc.data.prefix,
+          label: keyDoc.data.label,
+          scopes
+        }
+      };
     }
 
     return { authenticated: false, status: 401, error: 'UNAUTHORIZED', message: 'Invalid API key' };

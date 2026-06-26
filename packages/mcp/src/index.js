@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Taichu MCP Server v0.4.0 — 31 Agent Tools
+ * Taichu MCP Server — 31 Agent Tools
  *
  * 让任何支持 MCP 的 AI Agent 直接操控 Taichu CMS 的内容。
  *
@@ -11,8 +11,26 @@
  *   TAICHU_AGENT_KEY=taichu_xxx node ...                   # Agent API Key
  */
 
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import { McpServer } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+function getVersion() {
+  try {
+    // Navigate: packages/mcp/src → packages/mcp → packages → project root
+    const rootPkg = join(__dirname, '..', '..', '..', 'package.json');
+    return JSON.parse(readFileSync(rootPkg, 'utf-8')).version || '0.0.0';
+  } catch {
+    return '0.0.0';
+  }
+}
+
+const VERSION = getVersion();
 
 const API_BASE = process.env.TAICHU_API || 'http://localhost:3120';
 const API_KEY = process.env.TAICHU_AGENT_KEY || '';
@@ -273,7 +291,7 @@ async function getContentRelations(args) {
 
 const server = new McpServer({
   name: 'taichu',
-  version: '0.4.0',
+  version: VERSION,
   description: 'Taichu CMS — AI Agent-Native Content Infrastructure. Provides 31 tools for full content lifecycle management.'
 });
 
@@ -378,7 +396,7 @@ reg('get_agent',             'Get detailed information about a registered agent,
 
 async function main() {
   const transport = new StdioServerTransport();
-  console.error(`Taichu MCP Server v0.3.0`);
+  console.error(`Taichu MCP Server v${VERSION}`);
   console.error(`API: ${API_BASE} | Auth: ${API_KEY ? 'API Key' : 'none'} | Tools: 31`);
   console.error(`Ready for agent connections via stdio`);
   await server.connect(transport);

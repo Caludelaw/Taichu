@@ -7,11 +7,13 @@
  *   - 不可变配置对象
  */
 
+import { getTaichuVersion } from '../../core/src/version.js';
+
 const schema = [
   // Server
   { key: 'port',          env: 'TAICHU_PORT',          type: 'number',  default: 3120,  min: 1, max: 65535 },
   { key: 'host',          env: 'TAICHU_HOST',          type: 'string',  default: '0.0.0.0' },
-  { key: 'version',       env: 'TAICHU_VERSION',       type: 'string',  default: '0.6.0' },
+  { key: 'version',       env: 'TAICHU_VERSION',       type: 'string',  default: getTaichuVersion() },
 
   // Storage
   { key: 'storage',       env: 'TAICHU_STORAGE',       type: 'enum',    default: 'memory',  values: ['memory', 'sqlite'] },

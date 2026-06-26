@@ -134,8 +134,8 @@
 |---------|----------|--------|
 | Theme Persistence (activeTheme hardcoded → store-backed) | P0 | ✅ Done |
 | Agent API Key Lookup Optimization (O(n)→O(1)) | P0 | ✅ Done |
-| MCP Server Version Consistency | P0 | ⬜ Todo |
-| Admin Badge Dark Mode CSS Variables | P0 | ⬜ Todo |
+| MCP Server Version Consistency | P0 | ✅ Done |
+| Admin Badge Dark Mode CSS Variables | P0 | ✅ Done |
 | Test Coverage: sm-crypto, MCP, WebSocket, scheduler, webhook, plugin-manager | P1 | ⬜ Todo |
 | Admin i18n Completion (10+ untranslated views) | P1 | ⬜ Todo |
 | SQLite JSON.parse Error Handling | P1 | ⬜ Todo |

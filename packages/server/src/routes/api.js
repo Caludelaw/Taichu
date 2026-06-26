@@ -15,6 +15,7 @@
  */
 
 import { NotFoundError, ValidationError } from '../../../core/src/errors.js';
+import { getTaichuVersion } from '../../../core/src/version.js';
 import { search as vectorSearch } from '../search.js';
 import { requireAuth, requireScopedAuth, optionalAuth } from '../middleware/auth.js';
 import { serveCached, latestUpdate } from '../../../core/src/cache.js';
@@ -65,7 +66,7 @@ export async function apiRoutes(ctx) {
     ctx.res.end(JSON.stringify({
       status: 'ok',
       name: 'taichu',
-      version: '0.1.0',
+      version: getTaichuVersion(),
       uptime: process.uptime()
     }));
     return;

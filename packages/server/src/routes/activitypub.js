@@ -16,6 +16,7 @@ import {
 } from '../activitypub.js';
 import { getStore } from '../context.js';
 import { createLogger } from '../logger.js';
+import { getTaichuVersion } from '../../../core/src/version.js';
 
 const log = createLogger('ap-routes');
 
@@ -119,7 +120,7 @@ export async function activityPubRoutes(ctx) {
     ctx.res.writeHead(200, { 'Content-Type': 'application/json' });
     ctx.res.end(JSON.stringify({
       version: '2.0',
-      software: { name: 'taichu', version: '0.5.0' },
+      software: { name: 'taichu', version: getTaichuVersion() },
       protocols: ['activitypub'],
       services: { inbound: [], outbound: [] },
       openRegistrations: false,

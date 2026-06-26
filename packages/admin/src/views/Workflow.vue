@@ -73,10 +73,9 @@ table { width: 100%; border-collapse: collapse; font-size: 13px; }
 th, td { padding: 10px 16px; text-align: left; border-bottom: 1px solid var(--border); }
 th { font-weight: 600; color: var(--text-secondary); background: var(--bg); }
 .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
-.tag-pending_review { background: #FEF3C7; color: #92400E; }
-.tag-published { background: #DCFCE7; color: #166534; }
-.tag-approved { background: #DCFCE7; color: #166534; }
-.tag-rejected { background: #FEE2E2; color: #991B1B; }
+.tag-pending_review { background: var(--badge-draft-bg, #FEF3C7); color: var(--badge-draft-color, #92400E); }
+.tag-published, .tag-approved { background: var(--badge-published-bg, #DCFCE7); color: var(--badge-published-color, #166534); }
+.tag-rejected { background: var(--badge-danger-bg, #FEE2E2); color: var(--badge-danger-color, #991B1B); }
 .actions { display: flex; gap: 6px; }
 .btn-sm { padding: 4px 12px; border: none; border-radius: 4px; font-size: 12px; cursor: pointer; }
 .btn-green { background: #10B981; color: #fff; }

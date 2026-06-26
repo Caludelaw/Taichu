@@ -143,7 +143,7 @@ async function refresh() {
 .plugin-card.installed { border-color: #10B981; }
 .plugin-header { display: flex; justify-content: space-between; align-items: center; }
 .plugin-header h3 { font-size: 15px; font-weight: 600; color: var(--text-primary); margin: 0; }
-.badge-done { font-size: 11px; color: #065F46; background: #D1FAE5; padding: 2px 8px; border-radius: 4px; }
+.badge-done { font-size: 11px; color: var(--badge-published-color, #065F46); background: var(--badge-published-bg, #D1FAE5); padding: 2px 8px; border-radius: 4px; }
 .badge-ver { font-size: 11px; color: var(--text-muted); }
 .plugin-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin: 0; }
 .plugin-meta { font-size: 11px; color: var(--text-muted); display: flex; gap: 12px; }

@@ -178,11 +178,11 @@ tr.selected { background: var(--primary-bg); }
 .btn-batch-danger { color: #991B1B; border-color: #FCA5A5; background: #FEE2E2; }
 .btn-batch-danger:hover { background: #FECACA; }
 .badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
-.badge-published { background: #D1FAE5; color: #065F46; }
-.badge-draft { background: #FEF3C7; color: #92400E; }
-.badge-archived { background: #F3F4F6; color: #6B7280; }
-.badge-active { background: #D1FAE5; color: #065F46; }
-.badge-revoked { background: #FEE2E2; color: #991B1B; }
+.badge-published { background: var(--badge-published-bg, #D1FAE5); color: var(--badge-published-color, #065F46); }
+.badge-draft { background: var(--badge-draft-bg, #FEF3C7); color: var(--badge-draft-color, #92400E); }
+.badge-archived { background: var(--badge-archived-bg, #F3F4F6); color: var(--badge-archived-color, #6B7280); }
+.badge-active { background: var(--badge-published-bg, #D1FAE5); color: var(--badge-published-color, #065F46); }
+.badge-revoked { background: var(--badge-danger-bg, #FEE2E2); color: var(--badge-danger-color, #991B1B); }
 .date { color: var(--text-secondary); font-size: 13px; }
 .btn-sm { padding: 4px 12px; font-size: 12px; border: 1px solid var(--border); background: var(--surface); border-radius: 4px; cursor: pointer; margin-right: 4px; }
 .btn-sm:hover { border-color: var(--primary); }

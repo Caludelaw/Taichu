@@ -61,10 +61,8 @@ th, td { padding: 10px 16px; text-align: left; border-bottom: 1px solid var(--bo
 th { font-weight: 600; color: var(--text-secondary); background: var(--bg); }
 .time { white-space: nowrap; color: var(--text-secondary); }
 .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
-.tag-create, .tag-publish { background: #DCFCE7; color: #166534; }
-.tag-update { background: #FEF3C7; color: #92400E; }
-.tag-delete { background: #FEE2E2; color: #991B1B; }
-.tag-review_requested, .tag-rejected { background: #FEE2E2; color: #991B1B; }
-.tag-approved { background: #DCFCE7; color: #166534; }
+.tag-create, .tag-publish, .tag-approved { background: var(--badge-published-bg, #DCFCE7); color: var(--badge-published-color, #166534); }
+.tag-update { background: var(--badge-draft-bg, #FEF3C7); color: var(--badge-draft-color, #92400E); }
+.tag-delete, .tag-review_requested, .tag-rejected { background: var(--badge-danger-bg, #FEE2E2); color: var(--badge-danger-color, #991B1B); }
 .empty { padding: 32px; text-align: center; color: var(--text-muted); }
 </style>

@@ -223,8 +223,8 @@ function authHeaders() {
   border-top: 1px solid var(--border, #e5e7eb);
 }
 .badge-active {
-  background: #d1fae5;
-  color: #065f46;
+  background: var(--badge-published-bg, #d1fae5);
+  color: var(--badge-published-color, #065f46);
   padding: 2px 8px;
   border-radius: 4px;
   font-size: 11px;

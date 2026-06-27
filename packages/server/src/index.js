@@ -37,7 +37,7 @@ import { startScheduler, stopScheduler } from './scheduler.js';
 
 export async function start(configOverrides = {}) {
   const config = loadConfig();
-  const { port, host, storage, dataDir, version } = config;
+  const { port, host, storage, dataDir, version, corsOrigin } = config;
 
   // Pre-init store so the first request doesn't pay cold-start cost
   const ctx = await createContext({ req: null, res: null, url: null, body: null, config: { storage, dataDir } });
@@ -109,7 +109,7 @@ export async function start(configOverrides = {}) {
 
     try {
       // 1. CORS
-      corsMiddleware(req, res);
+      corsMiddleware(req, res, corsOrigin);
       if (req.method === 'OPTIONS') {
         res.writeHead(204);
         res.end();

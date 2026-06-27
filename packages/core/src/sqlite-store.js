@@ -140,14 +140,14 @@ export async function createSQLiteStore(config = {}) {
     return {
       id: row[0],
       type: row[1],
-      data: JSON.parse(row[2]),
+      data: safeJsonParse(row[2]),
       status: row[3],
       publishedAt: row[4] || null,
       tenantId: row[5] || 'default',
       createdBy: row[6],
       createdAt: row[7],
       updatedAt: row[8],
-      meta: JSON.parse(row[9])
+      meta: safeJsonParse(row[9])
     };
   }
 
@@ -184,7 +184,7 @@ export async function createSQLiteStore(config = {}) {
 
       markDirty();
 
-      return { id, type, data: JSON.parse(data), status, publishedAt, tenantId, createdBy, createdAt, updatedAt: now, meta: JSON.parse(meta) };
+      return { id, type, data: safeJsonParse(data), status, publishedAt, tenantId, createdBy, createdAt, updatedAt: now, meta: safeJsonParse(meta) };
     },
 
     async get(id) {
@@ -350,13 +350,26 @@ function rowToDocFromObj(row) {
   return {
     id: row.id,
     type: row.type,
-    data: JSON.parse(row.data),
+    data: safeJsonParse(row.data),
     status: row.status,
     publishedAt: row.published_at || null,
     tenantId: row.tenant_id || 'default',
     createdBy: row.created_by || null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
-    meta: JSON.parse(row.meta || '{}')
+    meta: safeJsonParse(row.meta, {})
   };
+}
+
+/**
+ * Safely parse JSON string, returning fallback on parse error.
+ * Handles null/undefined input and corrupted JSON gracefully.
+ */
+function safeJsonParse(str, fallback = {}) {
+  if (str == null) return fallback;
+  try {
+    return JSON.parse(str);
+  } catch {
+    return fallback;
+  }
 }

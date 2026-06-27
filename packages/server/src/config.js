@@ -28,6 +28,7 @@ const schema = [
   { key: 'publicRead',    env: 'TAICHU_PUBLIC_READ',   type: 'boolean', default: false },
   { key: 'maxBodySize',   env: 'TAICHU_MAX_BODY_SIZE', type: 'number',  default: 5 * 1024 * 1024, min: 1024 },
   { key: 'maxFileSize',   env: 'TAICHU_MAX_FILE_SIZE', type: 'number',  default: 50 * 1024 * 1024, min: 1024 },
+  { key: 'corsOrigin',    env: 'TAICHU_CORS_ORIGIN',   type: 'string',  default: '*' },
 
   // Uploads
   { key: 'uploadDir',     env: 'TAICHU_UPLOAD_DIR',    type: 'string',  default: null },

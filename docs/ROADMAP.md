@@ -138,8 +138,8 @@
 | Admin Badge Dark Mode CSS Variables | P0 | ✅ Done |
 | Test Coverage: sm-crypto, MCP, WebSocket, scheduler, webhook, plugin-manager | P1 | ⬜ Todo |
 | Admin i18n Completion (10+ untranslated views) | P1 | ⬜ Todo |
-| SQLite JSON.parse Error Handling | P1 | ⬜ Todo |
-| CORS Origin Configuration (TAICHU_CORS_ORIGIN env) | P1 | ⬜ Todo |
+| SQLite JSON.parse Error Handling | P1 | ✅ Done |
+| CORS Origin Configuration (TAICHU_CORS_ORIGIN env) | P1 | ✅ Done |
 | Admin Icon System (emoji → SVG icons) | P1 | ⬜ Todo |
 | Content Preview in Admin | P2 | ⬜ Todo |
 | Revisions Diff Viewer UI | P2 | ⬜ Todo |

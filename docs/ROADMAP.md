@@ -136,7 +136,7 @@
 | Agent API Key Lookup Optimization (O(n)→O(1)) | P0 | ✅ Done |
 | MCP Server Version Consistency | P0 | ✅ Done |
 | Admin Badge Dark Mode CSS Variables | P0 | ✅ Done |
-| Test Coverage: sm-crypto, MCP, WebSocket, scheduler, webhook, plugin-manager | P1 | ⬜ Todo |
+| Test Coverage: sm-crypto ✅, scheduler ✅, MCP, WebSocket, webhook, plugin-manager (4/6 remaining) | P1 | 🔄 In Progress |
 | Admin i18n Completion (10+ untranslated views) | P1 | ⬜ Todo |
 | SQLite JSON.parse Error Handling | P1 | ✅ Done |
 | CORS Origin Configuration (TAICHU_CORS_ORIGIN env) | P1 | ✅ Done |

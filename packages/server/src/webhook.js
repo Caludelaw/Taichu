@@ -186,7 +186,11 @@ class WebhookManager {
 
 let _wm = null;
 
+export { WebhookManager };
+
 export function getWebhookManager(store) {
   if (!_wm && store) _wm = new WebhookManager(store);
   return _wm;
 }
+
+export function _resetWm() { _wm = null; }

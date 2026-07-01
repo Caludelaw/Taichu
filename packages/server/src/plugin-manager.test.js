@@ -40,6 +40,8 @@ function cleanTmp() {
 function setupPlugin(name, manifest, source) {
   const dir = join(TMP, name);
   mkdirSync(dir, { recursive: true });
+  // Ensure ESM resolution on Node 18 (no automatic detection)
+  writeFileSync(join(dir, 'package.json'), JSON.stringify({ type: 'module' }));
   if (manifest) {
     writeFileSync(join(dir, 'taichu.plugin.json'), JSON.stringify(manifest, null, 2));
   }

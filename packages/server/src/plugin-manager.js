@@ -23,7 +23,7 @@
  */
 
 import { existsSync, readFileSync } from 'node:fs';
-import { join, dirname } from 'node:path';
+import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { createLogger } from './logger.js';
 
@@ -48,7 +48,7 @@ const log = createLogger('plugin');
  * @property {object} config      — App config
  */
 
-class PluginManager {
+export class PluginManager {
   constructor() {
     /** @type {Map<string, { manifest: PluginManifest, module: any, api: PluginAPI }>} */
     this.plugins = new Map();
@@ -162,4 +162,9 @@ let _pm = null;
 export function getPluginManager() {
   if (!_pm) _pm = new PluginManager();
   return _pm;
+}
+
+/** @internal Reset singleton — for tests only */
+export function _resetPluginManager() {
+  _pm = null;
 }

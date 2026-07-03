@@ -14,7 +14,7 @@
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import { McpServer } from '@modelcontextprotocol/sdk/server/index.js';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -37,8 +37,9 @@ const API_KEY = process.env.TAICHU_AGENT_KEY || '';
 
 async function request(path, options = {}) {
   const headers = { 'Content-Type': 'application/json', ...options.headers };
-  if (API_KEY) headers['X-Taichu-Agent-Key'] = API_KEY;
-  const url = `${API_BASE}/api${path}`;
+  const agentKey = process.env.TAICHU_AGENT_KEY;
+  if (agentKey) headers['X-Taichu-Agent-Key'] = agentKey;
+  const url = `${process.env.TAICHU_API || 'http://localhost:3120'}/api${path}`;
   const res = await fetch(url, { ...options, headers });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ message: res.statusText }));
@@ -285,45 +286,6 @@ async function getContentRelations(args) {
   return ok({ id, type, relations });
 }
 
-// ─────────────────────────────────────────────────────────────
-// REGISTER ALL TOOLS
-// ─────────────────────────────────────────────────────────────
-
-const server = new McpServer({
-  name: 'taichu',
-  version: VERSION,
-  description: 'Taichu CMS — AI Agent-Native Content Infrastructure. Provides 31 tools for full content lifecycle management.'
-});
-
-function reg(name, desc, schema, fn) {
-  server.registerTool(name, { description: desc, inputSchema: schema }, fn);
-}
-
-reg('list_content',          'List documents of a given content type. Use this to browse articles, pages, categories, media, etc.',                                    { type:'object', properties:{ type:{ type:'string', description:'Content type name (e.g. article, page, category, media)' }, status:{ type:'string', enum:['draft','published','archived'] }, search:{ type:'string' }, limit:{ type:'number' }, offset:{ type:'number' } }, required:['type'] }, listContent);
-reg('get_content',           'Get a single document by its type and ID, including all fields and metadata.',                                                           { type:'object', properties:{ type:{ type:'string' }, id:{ type:'string' } }, required:['type','id'] }, getContent);
-reg('create_content',        'Create a new document. You can create articles, pages, categories, or any registered content type.',                                   { type:'object', properties:{ type:{ type:'string' }, data:{ type:'object' }, status:{ type:'string', enum:['draft','published'] } }, required:['type','data'] }, createContent);
-reg('update_content',        'Update an existing document. Only the fields you provide will be updated (partial merge).',                                            { type:'object', properties:{ type:{ type:'string' }, id:{ type:'string' }, data:{ type:'object' } }, required:['type','id','data'] }, updateContent);
-reg('delete_content',        'Delete a document permanently. Use with caution — this cannot be undone.',                                                              { type:'object', properties:{ type:{ type:'string' }, id:{ type:'string' } }, required:['type','id'] }, deleteContent);
-reg('list_content_types',    'List all available content types and their field definitions. Use this to discover what kind of content Taichu supports.',                { type:'object', properties:{} }, listContentTypes);
-reg('search_content',        'Semantic search across all content using TF-IDF vector similarity. Returns results sorted by relevance score.',                        { type:'object', properties:{ query:{ type:'string' }, type:{ type:'string' }, limit:{ type:'number' } }, required:['query'] }, searchContent);
-reg('get_content_type_schema','Get the complete field schema for a specific content type, including field types, validation rules, and semantic mappings.',          { type:'object', properties:{ type:{ type:'string' } }, required:['type'] }, getContentTypeSchema);
-reg('count_content',         'Count the number of documents of a given type. Useful for statistics and pagination.',                                                  { type:'object', properties:{ type:{ type:'string' }, status:{ type:'string' } }, required:['type'] }, countContent);
-reg('publish_content',       'Publish a draft document, making it publicly visible.',                                                                               { type:'object', properties:{ type:{ type:'string' }, id:{ type:'string' } }, required:['type','id'] }, publishContent);
-reg('archive_content',       'Archive a published document, removing it from public view.',                                                                          { type:'object', properties:{ type:{ type:'string' }, id:{ type:'string' } }, required:['type','id'] }, archiveContent);
-reg('batch_create_content',  'Create multiple documents of the same type in one operation.',                                                                        { type:'object', properties:{ type:{ type:'string' }, items:{ type:'array', items:{ type:'object' } }, status:{ type:'string' } }, required:['type','items'] }, batchCreateContent);
-reg('batch_update_content',  'Update multiple documents of the same type in one operation.',                                                                        { type:'object', properties:{ type:{ type:'string' }, items:{ type:'array', items:{ type:'object', properties:{ id:{ type:'string' }, data:{ type:'object' } }, required:['id','data'] } } }, required:['type','items'] }, batchUpdateContent);
-reg('clear_content',         'Delete ALL documents of a given type. Use with extreme caution.',                                                                     { type:'object', properties:{ type:{ type:'string' } }, required:['type'] }, clearContent);
-reg('list_media',            'List uploaded media files with URLs, sizes, and dimensions.',                                                                         { type:'object', properties:{ limit:{ type:'number' } } }, listMedia);
-reg('get_stats',             'Get system statistics: content type counts, total documents, server uptime.',                                                          { type:'object', properties:{} }, getStats);
-reg('health_check',          'Check if the Taichu server is running and get its version, status, and uptime.',                                                         { type:'object', properties:{} }, healthCheck);
-reg('get_content_by_field',  'Find documents where a specific field matches a given value. Useful for looking up content by slug, author, etc.',                    { type:'object', properties:{ type:{ type:'string' }, field:{ type:'string' }, value:{ type:'string' } }, required:['type','field','value'] }, getContentByField);
-reg('export_content',        'Export all documents of a given type as structured JSON.',                                                                             { type:'object', properties:{ type:{ type:'string' }, format:{ type:'string', enum:['json'] } }, required:['type'] }, exportContent);
-reg('import_content',        'Bulk import documents from an array of data objects.',                                                                                 { type:'object', properties:{ type:{ type:'string' }, docs:{ type:'array', items:{ type:'object', properties:{ data:{ type:'object' }, status:{ type:'string' } }, required:['data'] } } }, required:['type','docs'] }, importContent);
-reg('get_api_keys',          'List all API keys associated with your account.',                                                                                      { type:'object', properties:{} }, getApiKeys);
-reg('create_api_key',        'Create a new API key for an AI agent to access Taichu. The raw key is only returned once.',                                             { type:'object', properties:{ label:{ type:'string' } } }, createApiKey);
-reg('rebuild_search_index',  'Rebuild the TF-IDF search index from all existing content. Use this after importing or migrating content.',                           { type:'object', properties:{} }, rebuildSearchIndex);
-reg('get_content_relations', 'Discover content related to a document by analyzing field references and text similarity.',                                           { type:'object', properties:{ type:{ type:'string' }, id:{ type:'string' } }, required:['type','id'] }, getContentRelations);
-
 // ── Agent Marketplace Tools ─────────────────────────────────
 
 // 29. discover_agents
@@ -383,18 +345,62 @@ async function listPipelines() {
   return ok(data.templates || data);
 }
 
-reg('query_audit_log',       'Query the audit log for content operations. Filter by actor, action type, or date range.',                                             { type:'object', properties:{ actorId:{ type:'string' }, action:{ type:'string', enum:['create','update','delete','publish','archive','login','review'] }, limit:{ type:'number' } } }, queryAuditLog);
-reg('get_site_settings',     'Get site configuration including ICP备案 number, analytics ID, site name, and language settings.',                                    { type:'object', properties:{} }, getSiteSettings);
-reg('update_site_settings',  'Update site configuration. Use this to set ICP备案号 (icpNumber), analytics, language, etc.',                                         { type:'object', properties:{ icpNumber:{ type:'string' }, gonganNumber:{ type:'string' }, analyticsId:{ type:'string' }, siteName:{ type:'string' }, language:{ type:'string' } } }, updateSiteSettings);
-reg('list_pipelines',        'List available content processing pipelines (translation, SEO, review). Use to discover Agent automation capabilities.',               { type:'object', properties:{} }, listPipelines);
-reg('discover_agents',       'Discover registered AI agents and their capabilities. Search by query, tag, tool name, or scope. Use this to find agents that can help with specific tasks.', { type:'object', properties:{ query:{ type:'string', description:'Search query for agent name, description, or tools' }, tag:{ type:'string', description:'Filter by capability tag' }, tool:{ type:'string', description:'Search by tool name' }, scope:{ type:'string', description:'Search by permission scope' }, limit:{ type:'number' } } }, discoverAgents);
-reg('get_agent',             'Get detailed information about a registered agent, including all capabilities, endpoints, and metadata.',                                 { type:'object', properties:{ id:{ type:'string', description:'Agent ID' } }, required:['id'] }, getAgentDetails);
+// ─────────────────────────────────────────────────────────────
+// SERVER SETUP (deferred — only called in main() to avoid
+// import-time side effects that break testability)
+// ─────────────────────────────────────────────────────────────
+
+function createMcpServer() {
+  const server = new McpServer({
+    name: 'taichu',
+    version: VERSION,
+    description: 'Taichu CMS — AI Agent-Native Content Infrastructure. Provides 31 tools for full content lifecycle management.'
+  });
+
+  function reg(name, desc, schema, fn) {
+    server.registerTool(name, { description: desc, inputSchema: schema }, fn);
+  }
+
+  reg('list_content',          'List documents of a given content type. Use this to browse articles, pages, categories, media, etc.',                                    { type:'object', properties:{ type:{ type:'string', description:'Content type name (e.g. article, page, category, media)' }, status:{ type:'string', enum:['draft','published','archived'] }, search:{ type:'string' }, limit:{ type:'number' }, offset:{ type:'number' } }, required:['type'] }, listContent);
+  reg('get_content',           'Get a single document by its type and ID, including all fields and metadata.',                                                           { type:'object', properties:{ type:{ type:'string' }, id:{ type:'string' } }, required:['type','id'] }, getContent);
+  reg('create_content',        'Create a new document. You can create articles, pages, categories, or any registered content type.',                                   { type:'object', properties:{ type:{ type:'string' }, data:{ type:'object' }, status:{ type:'string', enum:['draft','published'] } }, required:['type','data'] }, createContent);
+  reg('update_content',        'Update an existing document. Only the fields you provide will be updated (partial merge).',                                            { type:'object', properties:{ type:{ type:'string' }, id:{ type:'string' }, data:{ type:'object' } }, required:['type','id','data'] }, updateContent);
+  reg('delete_content',        'Delete a document permanently. Use with caution — this cannot be undone.',                                                              { type:'object', properties:{ type:{ type:'string' }, id:{ type:'string' } }, required:['type','id'] }, deleteContent);
+  reg('list_content_types',    'List all available content types and their field definitions. Use this to discover what kind of content Taichu supports.',                { type:'object', properties:{} }, listContentTypes);
+  reg('search_content',        'Semantic search across all content using TF-IDF vector similarity. Returns results sorted by relevance score.',                        { type:'object', properties:{ query:{ type:'string' }, type:{ type:'string' }, limit:{ type:'number' } }, required:['query'] }, searchContent);
+  reg('get_content_type_schema','Get the complete field schema for a specific content type, including field types, validation rules, and semantic mappings.',          { type:'object', properties:{ type:{ type:'string' } }, required:['type'] }, getContentTypeSchema);
+  reg('count_content',         'Count the number of documents of a given type. Useful for statistics and pagination.',                                                  { type:'object', properties:{ type:{ type:'string' }, status:{ type:'string' } }, required:['type'] }, countContent);
+  reg('publish_content',       'Publish a draft document, making it publicly visible.',                                                                               { type:'object', properties:{ type:{ type:'string' }, id:{ type:'string' } }, required:['type','id'] }, publishContent);
+  reg('archive_content',       'Archive a published document, removing it from public view.',                                                                          { type:'object', properties:{ type:{ type:'string' }, id:{ type:'string' } }, required:['type','id'] }, archiveContent);
+  reg('batch_create_content',  'Create multiple documents of the same type in one operation.',                                                                        { type:'object', properties:{ type:{ type:'string' }, items:{ type:'array', items:{ type:'object' } }, status:{ type:'string' } }, required:['type','items'] }, batchCreateContent);
+  reg('batch_update_content',  'Update multiple documents of the same type in one operation.',                                                                        { type:'object', properties:{ type:{ type:'string' }, items:{ type:'array', items:{ type:'object', properties:{ id:{ type:'string' }, data:{ type:'object' } }, required:['id','data'] } } }, required:['type','items'] }, batchUpdateContent);
+  reg('clear_content',         'Delete ALL documents of a given type. Use with extreme caution.',                                                                     { type:'object', properties:{ type:{ type:'string' } }, required:['type'] }, clearContent);
+  reg('list_media',            'List uploaded media files with URLs, sizes, and dimensions.',                                                                         { type:'object', properties:{ limit:{ type:'number' } } }, listMedia);
+  reg('get_stats',             'Get system statistics: content type counts, total documents, server uptime.',                                                          { type:'object', properties:{} }, getStats);
+  reg('health_check',          'Check if the Taichu server is running and get its version, status, and uptime.',                                                         { type:'object', properties:{} }, healthCheck);
+  reg('get_content_by_field',  'Find documents where a specific field matches a given value. Useful for looking up content by slug, author, etc.',                    { type:'object', properties:{ type:{ type:'string' }, field:{ type:'string' }, value:{ type:'string' } }, required:['type','field','value'] }, getContentByField);
+  reg('export_content',        'Export all documents of a given type as structured JSON.',                                                                             { type:'object', properties:{ type:{ type:'string' }, format:{ type:'string', enum:['json'] } }, required:['type'] }, exportContent);
+  reg('import_content',        'Bulk import documents from an array of data objects.',                                                                                 { type:'object', properties:{ type:{ type:'string' }, docs:{ type:'array', items:{ type:'object', properties:{ data:{ type:'object' }, status:{ type:'string' } }, required:['data'] } } }, required:['type','docs'] }, importContent);
+  reg('get_api_keys',          'List all API keys associated with your account.',                                                                                      { type:'object', properties:{} }, getApiKeys);
+  reg('create_api_key',        'Create a new API key for an AI agent to access Taichu. The raw key is only returned once.',                                             { type:'object', properties:{ label:{ type:'string' } } }, createApiKey);
+  reg('rebuild_search_index',  'Rebuild the TF-IDF search index from all existing content. Use this after importing or migrating content.',                           { type:'object', properties:{} }, rebuildSearchIndex);
+  reg('get_content_relations', 'Discover content related to a document by analyzing field references and text similarity.',                                           { type:'object', properties:{ type:{ type:'string' }, id:{ type:'string' } }, required:['type','id'] }, getContentRelations);
+  reg('query_audit_log',       'Query the audit log for content operations. Filter by actor, action type, or date range.',                                             { type:'object', properties:{ actorId:{ type:'string' }, action:{ type:'string', enum:['create','update','delete','publish','archive','login','review'] }, limit:{ type:'number' } } }, queryAuditLog);
+  reg('get_site_settings',     'Get site configuration including ICP备案 number, analytics ID, site name, and language settings.',                                    { type:'object', properties:{} }, getSiteSettings);
+  reg('update_site_settings',  'Update site configuration. Use this to set ICP备案号 (icpNumber), analytics, language, etc.',                                         { type:'object', properties:{ icpNumber:{ type:'string' }, gonganNumber:{ type:'string' }, analyticsId:{ type:'string' }, siteName:{ type:'string' }, language:{ type:'string' } } }, updateSiteSettings);
+  reg('list_pipelines',        'List available content processing pipelines (translation, SEO, review). Use to discover Agent automation capabilities.',               { type:'object', properties:{} }, listPipelines);
+  reg('discover_agents',       'Discover registered AI agents and their capabilities. Search by query, tag, tool name, or scope. Use this to find agents that can help with specific tasks.', { type:'object', properties:{ query:{ type:'string', description:'Search query for agent name, description, or tools' }, tag:{ type:'string', description:'Filter by capability tag' }, tool:{ type:'string', description:'Search by tool name' }, scope:{ type:'string', description:'Search by permission scope' }, limit:{ type:'number' } } }, discoverAgents);
+  reg('get_agent',             'Get detailed information about a registered agent, including all capabilities, endpoints, and metadata.',                                 { type:'object', properties:{ id:{ type:'string', description:'Agent ID' } }, required:['id'] }, getAgentDetails);
+
+  return server;
+}
 
 // ─────────────────────────────────────────────────────────────
 // START
 // ─────────────────────────────────────────────────────────────
 
 async function main() {
+  const server = createMcpServer();
   const transport = new StdioServerTransport();
   console.error(`Taichu MCP Server v${VERSION}`);
   console.error(`API: ${API_BASE} | Auth: ${API_KEY ? 'API Key' : 'none'} | Tools: 31`);
@@ -402,7 +408,16 @@ async function main() {
   await server.connect(transport);
 }
 
-main().catch(err => {
-  console.error('MCP Server fatal error:', err.message);
-  process.exit(1);
-});
+// Only start when executed directly (not when imported for testing)
+const isMainModule = process.argv[1]
+  && process.argv[1].replace(/\\/g, '/').endsWith('packages/mcp/src/index.js');
+
+if (isMainModule) {
+  main().catch(err => {
+    console.error('MCP Server fatal error:', err.message);
+    process.exit(1);
+  });
+}
+
+// Exports for testing
+export { getVersion, request, ok, VERSION, API_BASE, API_KEY, createMcpServer };

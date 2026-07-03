@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 /**
  * Setup Git Hooks — graceful, safe for deployment.
  */
@@ -30,7 +31,7 @@ try {
       writeFileSync(dest, `#!/usr/bin/env sh\nsh "${src}"\n`);
       chmodSync(dest, 0o755);
       installed++;
-    } catch (e) {
+    } catch (_e) {
       // Silently skip if chmod fails (Windows)
     }
   }

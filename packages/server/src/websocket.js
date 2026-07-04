@@ -20,7 +20,7 @@ import { EventEmitter } from 'node:events';
 const WS_GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
 const HEARTBEAT_INTERVAL = 30000;
 
-class WebSocketServer extends EventEmitter {
+export class WebSocketServer extends EventEmitter {
   constructor() {
     super();
     /** @type {Map<string, WebSocket>} */
@@ -170,7 +170,7 @@ class WebSocketServer extends EventEmitter {
 
 // ── WebSocket Frame Protocol ───────────────────────────────
 
-class WebSocket {
+export class WebSocket {
   constructor(socket) {
     this.socket = socket;
     this._buffer = Buffer.alloc(0);
@@ -306,3 +306,5 @@ export function createWSS() {
   _wss = new WebSocketServer();
   return _wss;
 }
+
+export function _resetWSS() { _wss = null; }

@@ -13,7 +13,7 @@
     "dev": "node packages/server/src/index.js",
     "start": "TAICHU_PUBLIC_READ=1 node packages/server/src/index.js",
     "build": "cd packages/admin && npx vite build",
-    "test": "node --test packages/core/src/core.test.js packages/core/src/server.test.js packages/core/src/sm-crypto.test.js packages/server/src/scheduler.test.js packages/server/src/webhook.test.js packages/server/src/plugin-manager.test.js packages/mcp/src/index.test.js",
+    "test": "node --test packages/core/src/core.test.js packages/core/src/server.test.js packages/core/src/sm-crypto.test.js packages/server/src/scheduler.test.js packages/server/src/webhook.test.js packages/server/src/plugin-manager.test.js packages/server/src/websocket.test.js packages/mcp/src/index.test.js",
     "test:integration": "node --test packages/server/src/server.test.js",
     "test:e2e": "npx playwright test",
     "lint": "eslint .",

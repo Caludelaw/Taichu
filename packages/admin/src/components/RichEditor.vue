@@ -1,25 +1,25 @@
 <template>
   <div class="editor-wrapper" v-if="editor">
     <div class="toolbar">
-      <button @click="editor.chain().focus().toggleBold().run()" :class="{ active: editor.isActive('bold') }" title="粗体 (Ctrl+B)"><b>B</b></button>
-      <button @click="editor.chain().focus().toggleItalic().run()" :class="{ active: editor.isActive('italic') }" title="斜体 (Ctrl+I)"><i>I</i></button>
-      <button @click="editor.chain().focus().toggleStrike().run()" :class="{ active: editor.isActive('strike') }" title="删除线"><s>S</s></button>
-      <button @click="editor.chain().focus().toggleCode().run()" :class="{ active: editor.isActive('code') }" title="行内代码">&lt;/&gt;</button>
+      <button @click="editor.chain().focus().toggleBold().run()" :class="{ active: editor.isActive('bold') }" :title="$t('richEditor.bold')"><b>B</b></button>
+      <button @click="editor.chain().focus().toggleItalic().run()" :class="{ active: editor.isActive('italic') }" :title="$t('richEditor.italic')"><i>I</i></button>
+      <button @click="editor.chain().focus().toggleStrike().run()" :class="{ active: editor.isActive('strike') }" :title="$t('richEditor.strikethrough')"><s>S</s></button>
+      <button @click="editor.chain().focus().toggleCode().run()" :class="{ active: editor.isActive('code') }" :title="$t('richEditor.code')">&lt;/&gt;</button>
       <span class="sep"></span>
       <button @click="editor.chain().focus().toggleHeading({ level: 1 }).run()" :class="{ active: editor.isActive('heading', { level: 1 }) }">H1</button>
       <button @click="editor.chain().focus().toggleHeading({ level: 2 }).run()" :class="{ active: editor.isActive('heading', { level: 2 }) }">H2</button>
       <button @click="editor.chain().focus().toggleHeading({ level: 3 }).run()" :class="{ active: editor.isActive('heading', { level: 3 }) }">H3</button>
       <span class="sep"></span>
-      <button @click="editor.chain().focus().toggleBulletList().run()" :class="{ active: editor.isActive('bulletList') }" title="无序列表">• 列表</button>
-      <button @click="editor.chain().focus().toggleOrderedList().run()" :class="{ active: editor.isActive('orderedList') }" title="有序列表">1. 列表</button>
-      <button @click="editor.chain().focus().toggleBlockquote().run()" :class="{ active: editor.isActive('blockquote') }" title="引用">❝</button>
-      <button @click="editor.chain().focus().toggleCodeBlock().run()" :class="{ active: editor.isActive('codeBlock') }" title="代码块">&lt;code/&gt;</button>
+      <button @click="editor.chain().focus().toggleBulletList().run()" :class="{ active: editor.isActive('bulletList') }" :title="$t('richEditor.ul')">•</button>
+      <button @click="editor.chain().focus().toggleOrderedList().run()" :class="{ active: editor.isActive('orderedList') }" :title="$t('richEditor.ol')">1.</button>
+      <button @click="editor.chain().focus().toggleBlockquote().run()" :class="{ active: editor.isActive('blockquote') }" :title="$t('richEditor.blockquote')">❝</button>
+      <button @click="editor.chain().focus().toggleCodeBlock().run()" :class="{ active: editor.isActive('codeBlock') }" :title="$t('richEditor.code_block')">&lt;code/&gt;</button>
       <span class="sep"></span>
-      <button @click="openMediaBrowser" title="媒体库">🖼️</button>
-      <button @click="addImageByUrl" title="输入图片 URL">🔗</button>
-      <button @click="editor.chain().focus().setHorizontalRule().run()" title="分割线">—</button>
-      <button @click="editor.chain().focus().undo().run()" title="撤销 (Ctrl+Z)">↩</button>
-      <button @click="editor.chain().focus().redo().run()" title="重做 (Ctrl+Y)">↪</button>
+      <button @click="openMediaBrowser" :title="$t('richEditor.media')">🖼️</button>
+      <button @click="addImageByUrl" :title="$t('richEditor.image_url')">🔗</button>
+      <button @click="editor.chain().focus().setHorizontalRule().run()" title="—">—</button>
+      <button @click="editor.chain().focus().undo().run()" title="Undo (Ctrl+Z)">↩</button>
+      <button @click="editor.chain().focus().redo().run()" title="Redo (Ctrl+Y)">↪</button>
     </div>
     <editor-content :editor="editor" class="editor-content" />
 
@@ -27,17 +27,17 @@
     <div v-if="showMediaBrowser" class="modal-overlay" @click.self="showMediaBrowser = false">
       <div class="media-browser">
         <div class="mb-header">
-          <h3>🖼️ 媒体库</h3>
-          <button class="btn-close" @click="showMediaBrowser = false">✕</button>
+          <h3>{{ $t('richEditor.media_title') }}</h3>
+          <button class="btn-close" @click="showMediaBrowser = false">{{ $t('richEditor.close') }}</button>
         </div>
-        <div v-if="mediaLoading" class="mb-loading">加载中...</div>
+        <div v-if="mediaLoading" class="mb-loading">{{ $t('contentList.loading') }}</div>
         <div v-else-if="mediaError" class="mb-error">{{ mediaError }}</div>
         <div v-else class="mb-grid">
           <div v-for="m in mediaItems" :key="m.id" class="mb-item" @click="insertMedia(m)">
             <img :src="m.thumbnails?.small || m.url" :alt="m.originalName" loading="lazy" />
             <span class="mb-name">{{ m.originalName || m.filename }}</span>
           </div>
-          <div v-if="!mediaItems.length" class="mb-empty">暂无媒体文件</div>
+          <div v-if="!mediaItems.length" class="mb-empty">{{ $t('richEditor.empty') }}</div>
         </div>
       </div>
     </div>
@@ -51,10 +51,13 @@ import StarterKit from '@tiptap/starter-kit'
 import Image from '@tiptap/extension-image'
 import Link from '@tiptap/extension-link'
 import Placeholder from '@tiptap/extension-placeholder'
+import { useI18n } from '../i18n.js'
+
+const { t: $t } = useI18n()
 
 const props = defineProps({
   modelValue: { type: Object, default: () => ({}) },
-  placeholder: { type: String, default: '开始输入...' }
+  placeholder: { type: String, default: '' }
 })
 
 const emit = defineEmits(['update:modelValue'])
@@ -79,7 +82,6 @@ const editor = useEditor({
   }
 })
 
-// Watch for external model changes (e.g. loading existing content)
 watch(() => props.modelValue, (val) => {
   if (editor.value && val) {
     const current = JSON.stringify(editor.value.getJSON())
@@ -91,7 +93,7 @@ watch(() => props.modelValue, (val) => {
 })
 
 function addImageByUrl() {
-  const url = prompt('图片 URL:')
+  const url = prompt($t('richEditor.url_placeholder'))
   if (url) {
     insertImage(url)
   }
@@ -108,7 +110,7 @@ function openMediaBrowser() {
       mediaLoading.value = false
     })
     .catch(e => {
-      mediaError.value = '加载失败: ' + e.message
+      mediaError.value = $t('common.loading') + ': ' + e.message
       mediaLoading.value = false
     })
 }
@@ -168,13 +170,11 @@ onBeforeUnmount(() => {
 .editor-content :deep(img) { max-width: 100%; border-radius: 6px; margin: 8px 0; }
 .editor-content :deep(hr) { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
 
-/* Placeholder */
 .editor-content :deep(.is-editor-empty:first-child::before) {
   content: attr(data-placeholder); float: left; color: #94A3B8;
   pointer-events: none; height: 0;
 }
 
-/* Media Browser Modal */
 .modal-overlay {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;
   background: rgba(0,0,0,0.4); z-index: 1000;

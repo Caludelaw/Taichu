@@ -1,38 +1,35 @@
 <template>
   <div class="rel-panel" v-if="docId && docType">
     <div class="rel-header">
-      <h3>🔗 内容关系</h3>
-      <button @click="load" class="btn-sm" :disabled="loading">{{ loading ? '加载中...' : '刷新' }}</button>
+      <h3>{{ $t('relationships.title') }}</h3>
+      <button @click="load" class="btn-sm" :disabled="loading">{{ loading ? $t('contentList.loading') : $t('common.search') }}</button>
     </div>
 
-    <!-- Add relationship -->
     <div class="rel-add">
-      <input v-model="newTarget" placeholder="目标文档 ID" class="input-sm" />
+      <input v-model="newTarget" :placeholder="$t('relationships.target_id')" class="input-sm" />
       <select v-model="newType" class="input-sm select-sm">
-        <option value="related_to">关联</option>
-        <option value="parent_of">父级</option>
-        <option value="references">引用</option>
+        <option value="related_to">{{ $t('relationships.type_related') }}</option>
+        <option value="parent_of">{{ $t('relationships.type_parent') }}</option>
+        <option value="references">{{ $t('relationships.type_reference') }}</option>
       </select>
-      <button @click="addRel" class="btn-sm btn-primary-sm" :disabled="!newTarget || adding">添加</button>
+      <button @click="addRel" class="btn-sm btn-primary-sm" :disabled="!newTarget || adding">{{ $t('relationships.add') }}</button>
     </div>
     <p v-if="addError" class="add-error">{{ addError }}</p>
 
     <div class="rel-sections">
-      <!-- Outgoing -->
       <div class="rel-group">
-        <h4>出站关系 ({{ outgoing.length }})</h4>
-        <div v-if="!outgoing.length" class="rel-empty">暂无</div>
+        <h4>{{ $t('relationships.outbound') }} ({{ outgoing.length }})</h4>
+        <div v-if="!outgoing.length" class="rel-empty">{{ $t('relationships.no_items') }}</div>
         <div v-for="r in outgoing" :key="r.targetId + r.type" class="rel-item">
           <span class="rel-type" :class="'type-' + r.type">{{ typeLabel(r.type) }}</span>
           <span class="rel-title">{{ r.targetTitle || r.targetId }}</span>
-          <button @click="removeRel(r.targetId, r.type)" class="btn-del" title="删除">✕</button>
+          <button @click="removeRel(r.targetId, r.type)" class="btn-del" :title="$t('relationships.remove')">{{ $t('relationships.remove') }}</button>
         </div>
       </div>
 
-      <!-- Incoming -->
       <div class="rel-group">
-        <h4>入站关系 ({{ incoming.length }})</h4>
-        <div v-if="!incoming.length" class="rel-empty">暂无</div>
+        <h4>{{ $t('relationships.inbound') }} ({{ incoming.length }})</h4>
+        <div v-if="!incoming.length" class="rel-empty">{{ $t('relationships.no_items') }}</div>
         <div v-for="r in incoming" :key="r.sourceId + r.type" class="rel-item">
           <span class="rel-type" :class="'type-' + r.type">{{ typeLabel(r.type) }}</span>
           <span class="rel-title">{{ r.sourceTitle || r.sourceId }}</span>
@@ -40,16 +37,13 @@
       </div>
     </div>
 
-    <!-- Graph visualization -->
     <div v-if="graph.nodes.length > 0" class="rel-graph">
-      <h4>关系图谱</h4>
+      <h4>{{ $t('relationships.graph') }}</h4>
       <svg :viewBox="'0 0 ' + graphW + ' ' + graphH" class="graph-svg">
-        <!-- Edges -->
         <line v-for="(e, i) in graph.edges" :key="'e'+i"
           :x1="nodePos[e.from]?.x" :y1="nodePos[e.from]?.y"
           :x2="nodePos[e.to]?.x" :y2="nodePos[e.to]?.y"
           class="graph-edge" />
-        <!-- Nodes -->
         <g v-for="n in graph.nodes" :key="n.id">
           <circle :cx="nodePos[n.id]?.x" :cy="nodePos[n.id]?.y" r="22"
             :class="n.id === docId ? 'graph-node-self' : 'graph-node'" />
@@ -64,7 +58,9 @@
 <script setup>
 import { ref, reactive, watch, onMounted } from 'vue'
 import { api } from '../api/index.js'
+import { useI18n } from '../i18n.js'
 
+const { t: $t } = useI18n()
 const props = defineProps({ docId: String, docType: String })
 
 const outgoing = ref([])
@@ -81,8 +77,11 @@ const adding = ref(false)
 const addError = ref('')
 
 const TYPE_MAP = {
-  related_to: '关联', parent_of: '父级', child_of: '子级',
-  references: '引用', translated_from: '翻译源'
+  related_to: $t('relationships.type_related'),
+  parent_of: $t('relationships.type_parent'),
+  child_of: $t('relationships.type_parent'),
+  references: $t('relationships.type_reference'),
+  translated_from: $t('relationships.type_reference')
 }
 
 function typeLabel(t) { return TYPE_MAP[t] || t }
@@ -95,12 +94,10 @@ async function load() {
     outgoing.value = data.outgoing || []
     incoming.value = data.incoming || []
 
-    // Fetch graph with enriched node info
     const graphData = await api.request('/content/' + props.docType + '/' + props.docId + '/graph?depth=2')
     graph.nodes = graphData.nodes || []
     graph.edges = graphData.edges || []
 
-    // Layout nodes in a circle
     layoutNodes()
   } catch (e) {
     console.error('Failed to load relationships', e)
@@ -147,7 +144,7 @@ async function addRel() {
 }
 
 async function removeRel(targetId, type) {
-  if (!confirm('确定删除此关系？')) return
+  if (!confirm($t('contentList.delete_confirm'))) return
   try {
     await api.request('/content/' + props.docType + '/' + props.docId + '/relationships/' + targetId + '?type=' + type, {
       method: 'DELETE'

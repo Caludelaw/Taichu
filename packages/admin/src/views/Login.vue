@@ -1,21 +1,21 @@
 <template>
   <div class="login-page">
     <div class="login-card">
-      <h1>⚡ Taichu Admin</h1>
-      <p class="sub">AI Agent-Native CMS</p>
+      <h1>{{ $t('login.title') }}</h1>
+      <p class="sub">{{ $t('login.subtitle') }}</p>
 
       <div class="tabs">
-        <button :class="{ active: mode === 'login' }" @click="mode = 'login'">登录</button>
-        <button :class="{ active: mode === 'register' }" @click="mode = 'register'">注册</button>
+        <button :class="{ active: mode === 'login' }" @click="mode = 'login'">{{ $t('login.tab_login') }}</button>
+        <button :class="{ active: mode === 'register' }" @click="mode = 'register'">{{ $t('login.tab_register') }}</button>
       </div>
 
       <form @submit.prevent="submit">
-        <input v-model="username" placeholder="用户名" required autocomplete="username" />
-        <input v-if="mode === 'register'" v-model="email" placeholder="邮箱 (选填)" type="email" />
-        <input v-model="password" placeholder="密码" type="password" required autocomplete="current-password" />
+        <input v-model="username" :placeholder="$t('login.username')" required autocomplete="username" />
+        <input v-if="mode === 'register'" v-model="email" :placeholder="$t('login.email')" type="email" />
+        <input v-model="password" :placeholder="$t('login.password')" type="password" required autocomplete="current-password" />
         <p v-if="error" class="error">{{ error }}</p>
         <button type="submit" class="btn" :disabled="loading">
-          {{ loading ? '...' : mode === 'login' ? '登录' : '注册' }}
+          {{ loading ? $t('login.loading') : mode === 'login' ? $t('login.submit_login') : $t('login.submit_register') }}
         </button>
       </form>
     </div>
@@ -27,8 +27,10 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { auth } from '../stores/auth.js'
 import { api } from '../api/index.js'
+import { useI18n } from '../i18n.js'
 
 const router = useRouter()
+const { t: $t } = useI18n()
 const mode = ref('login')
 const username = ref('')
 const email = ref('')

@@ -1,116 +1,86 @@
 <template>
   <div>
     <div class="header">
-      <h1 class="page-title">🔗 Webhooks</h1>
-      <button @click="showForm = true" class="btn-primary">+ 新建 Webhook</button>
+      <h2 class="page-title">{{ $t('webhooks.title') }}</h2>
+      <button class="btn" @click="showCreate = true">{{ $t('webhooks.new') }}</button>
     </div>
 
-    <div v-if="showForm" class="card">
-      <h3>新建 Webhook</h3>
-      <div class="form-group">
-        <label>URL</label>
-        <input v-model="form.url" class="input" placeholder="https://example.com/webhook" />
-      </div>
-      <div class="form-group">
-        <label>标签</label>
-        <input v-model="form.label" class="input" placeholder="我的 Webhook" />
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label>事件</label>
-          <select v-model="form.events" multiple class="input" style="height:100px">
-            <option value="create">创建</option>
-            <option value="update">更新</option>
-            <option value="delete">删除</option>
-            <option value="publish">发布</option>
-            <option value="*">全部</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>内容类型</label>
-          <select v-model="form.types" multiple class="input" style="height:100px">
-            <option value="article">文章</option>
-            <option value="page">页面</option>
-            <option value="*">全部</option>
-          </select>
-        </div>
-      </div>
-      <div class="actions">
-        <button @click="createWebhook" class="btn-primary" :disabled="creating">{{ creating ? '创建中...' : '创建' }}</button>
-        <button @click="showForm = false" class="btn">取消</button>
+    <div v-if="showCreate" class="create-box">
+      <input v-model="form.url" placeholder="https://..." class="input" />
+      <input v-model="form.events" placeholder="content.created,content.updated" class="input" />
+      <div class="create-actions">
+        <button class="btn" @click="create">{{ $t('common.save') }}</button>
+        <button class="btn btn-cancel" @click="showCreate = false">{{ $t('common.cancel') }}</button>
       </div>
     </div>
 
-    <div v-if="hooks.length" class="table-wrap">
-      <table>
-        <thead><tr><th>标签</th><th>URL</th><th>事件</th><th>统计</th><th>操作</th></tr></thead>
-        <tbody>
-          <tr v-for="h in hooks" :key="h.id">
-            <td>{{ h.label }}</td>
-            <td class="url">{{ h.url }}</td>
-            <td><span v-for="e in h.events" :key="e" class="tag">{{ e }}</span></td>
-            <td>✅ {{ h.stats?.delivered || 0 }} / ❌ {{ h.stats?.failed || 0 }}</td>
-            <td><button @click="deleteHook(h.id)" class="btn-danger">删除</button></td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    <div v-else class="empty">暂无 Webhook</div>
+    <table v-if="webhooks.length" class="table">
+      <thead><tr><th>{{ $t('webhooks.url') }}</th><th>{{ $t('webhooks.events') }}</th><th>{{ $t('webhooks.status') }}</th><th>{{ $t('webhooks.actions') }}</th></tr></thead>
+      <tbody>
+        <tr v-for="w in webhooks" :key="w.id">
+          <td><code>{{ w.url }}</code></td>
+          <td>{{ (w.events || []).join(', ') }}</td>
+          <td>{{ w.active ? $t('webhooks.active') : $t('webhooks.inactive') }}</td>
+          <td>
+            <button class="btn-sm btn-danger" @click="remove(w.id)">{{ $t('webhooks.delete') }}</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <p v-else class="empty">{{ $t('webhooks.no_items') }}</p>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
 import { api } from '../api/index.js'
+import { notifyError } from '../utils/format.js'
+import { useI18n } from '../i18n.js'
 
-const hooks = ref([])
-const showForm = ref(false)
-const creating = ref(false)
-const form = ref({ url: '', label: '', events: ['*'], types: ['*'] })
+const { t: $t } = useI18n()
+const webhooks = ref([])
+const showCreate = ref(false)
+const form = ref({ url: '', events: '' })
+
+async function load() {
+  try {
+    const { docs } = await api.listContent('webhook', { limit: 200 })
+    webhooks.value = docs || []
+  } catch (e) { console.error(e) }
+}
+
+async function create() {
+  try {
+    await api.create('webhook', { url: form.value.url, events: form.value.events.split(',').map(s => s.trim()).filter(Boolean), active: true })
+    showCreate.value = false
+    form.value = { url: '', events: '' }
+    load()
+  } catch (e) { notifyError($t('webhooks.save_error'), e) }
+}
+
+async function remove(id) {
+  if (!confirm($t('webhooks.delete_confirm'))) return
+  try {
+    await api.deleteContent('webhook', id)
+    load()
+  } catch (e) { notifyError($t('webhooks.delete'), e) }
+}
 
 onMounted(load)
-async function load() {
-  try { hooks.value = (await api.getWebhooks()).webhooks || [] } catch (e) { console.error(e) }
-}
-async function createWebhook() {
-  creating.value = true
-  try {
-    await fetch('/api/webhooks', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('taichu_token')}` },
-      body: JSON.stringify({ url: form.value.url, label: form.value.label, events: form.value.events, types: form.value.types })
-    })
-    showForm.value = false
-    form.value = { url: '', label: '', events: ['*'], types: ['*'] }
-    await load()
-  } catch (e) { alert('创建失败: ' + e.message) }
-  creating.value = false
-}
-async function deleteHook(id) {
-  if (!confirm('确认删除？')) return
-  await fetch(`/api/webhooks/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('taichu_token')}` } })
-  await load()
-}
 </script>
 
 <style scoped>
-.page-title { font-size: 24px; margin-bottom: 0; }
-.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-.card { max-width: 640px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 24px; margin-bottom: 24px; }
-.card h3 { margin-bottom: 16px; font-size: 16px; }
-.form-group { margin-bottom: 16px; }
-.form-group label { display: block; font-size: 13px; color: var(--text-secondary); margin-bottom: 6px; }
-.form-row { display: flex; gap: 16px; }
-.form-row .form-group { flex: 1; }
-.input { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; background: var(--bg); color: var(--text-primary); }
-.actions { display: flex; gap: 8px; margin-top: 16px; }
-.btn-primary { padding: 10px 24px; background: var(--primary); color: #fff; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; }
-.btn { padding: 10px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; font-size: 14px; cursor: pointer; }
-.btn-danger { padding: 4px 12px; background: var(--danger); color: #fff; border: none; border-radius: 4px; font-size: 12px; cursor: pointer; }
-.table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-th, td { padding: 10px 16px; text-align: left; border-bottom: 1px solid var(--border); }
-.url { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.tag { display: inline-block; margin: 1px; padding: 1px 6px; background: #F0FDF4; color: var(--primary); border-radius: 3px; font-size: 11px; }
-.empty { padding: 32px; text-align: center; color: var(--text-muted); }
+.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.page-title { font-size: 22px; }
+.btn { padding: 8px 20px; background: var(--primary); color: white; border: none; border-radius: var(--radius); font-size: 14px; cursor: pointer; font-weight: 600; }
+.btn-cancel { background: var(--bg); color: var(--text-primary); border: 1px solid var(--border); }
+.create-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 20px; }
+.input { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; background: var(--bg); color: var(--text-primary); margin-bottom: 8px; }
+.create-actions { display: flex; gap: 8px; }
+.table { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); border-collapse: collapse; }
+.table th, .table td { padding: 10px 16px; text-align: left; font-size: 14px; border-bottom: 1px solid var(--border); }
+.table th { font-weight: 600; color: var(--text-secondary); background: var(--bg); }
+.btn-sm { padding: 4px 12px; font-size: 12px; border: 1px solid var(--border); background: var(--surface); border-radius: 4px; cursor: pointer; }
+.btn-danger { color: var(--danger); }
+.empty { color: var(--text-secondary); font-size: 14px; margin-top: 40px; text-align: center; }
 </style>

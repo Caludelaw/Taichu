@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h2 class="page-title">仪表盘</h2>
+    <h2 class="page-title">{{ $t('dashboard.title') }}</h2>
 
     <div class="cards">
       <div class="card" v-for="s in stats" :key="s.label">
@@ -11,7 +11,7 @@
 
     <div class="row">
       <div style="flex:1">
-        <h3 style="margin: 32px 0 12px; font-size: 16px;">内容概览</h3>
+        <h3 style="margin: 32px 0 12px; font-size: 16px;">{{ $t('dashboard.overview') }}</h3>
         <div class="chart-bar" v-if="statusChart.data.length">
           <div class="bar-row" v-for="item in statusChart.data" :key="item.label">
             <span class="bar-label">{{ item.label }}</span>
@@ -22,7 +22,7 @@
           </div>
         </div>
 
-        <h3 style="margin: 32px 0 12px; font-size: 16px;">按类型分布</h3>
+        <h3 style="margin: 32px 0 12px; font-size: 16px;">{{ $t('dashboard.by_type') }}</h3>
         <div class="chart-bar" v-if="typeChart.data.length">
           <div class="bar-row" v-for="item in typeChart.data" :key="item.label">
             <span class="bar-label">{{ item.label }}</span>
@@ -35,7 +35,7 @@
       </div>
 
       <div style="width:260px">
-        <h3 style="margin: 32px 0 12px; font-size: 16px;">最近内容</h3>
+        <h3 style="margin: 32px 0 12px; font-size: 16px;">{{ $t('dashboard.recent') }}</h3>
         <div class="recent" v-if="recent.length">
           <div class="recent-item" v-for="doc in recent" :key="doc.id">
             <router-link :to="`/content/${doc.type}/${doc.id}`" class="recent-link">
@@ -44,16 +44,16 @@
             <span class="meta">{{ doc.type }} · {{ statusLabel(doc.status) }} · {{ fmtDate(doc.updatedAt) }}</span>
           </div>
         </div>
-        <p v-else class="empty">暂无内容</p>
+        <p v-else class="empty">{{ $t('dashboard.no_content') }}</p>
 
-        <h3 style="margin: 32px 0 12px; font-size: 16px;">系统信息</h3>
+        <h3 style="margin: 32px 0 12px; font-size: 16px;">{{ $t('dashboard.system_info') }}</h3>
         <div class="system-info" v-if="sys">
-          <div class="sys-row"><span>版本</span><code>{{ sys.version }}</code></div>
-          <div class="sys-row"><span>Node.js</span><code>{{ sys.node }}</code></div>
-          <div class="sys-row"><span>运行时间</span><code>{{ formatUptime(sys.uptime) }}</code></div>
-          <div class="sys-row"><span>内存</span><code>{{ sys.memory }}</code></div>
-          <div class="sys-row"><span>存储</span><code>{{ sys.store }}</code></div>
-          <div class="sys-row"><span>WS 连接</span><code>{{ sys.ws }}</code></div>
+          <div class="sys-row"><span>{{ $t('dashboard.version') }}</span><code>{{ sys.version }}</code></div>
+          <div class="sys-row"><span>{{ $t('dashboard.node') }}</span><code>{{ sys.node }}</code></div>
+          <div class="sys-row"><span>{{ $t('dashboard.uptime') }}</span><code>{{ formatUptime(sys.uptime) }}</code></div>
+          <div class="sys-row"><span>{{ $t('dashboard.memory') }}</span><code>{{ sys.memory }}</code></div>
+          <div class="sys-row"><span>{{ $t('dashboard.store') }}</span><code>{{ sys.store }}</code></div>
+          <div class="sys-row"><span>{{ $t('dashboard.ws_connections') }}</span><code>{{ sys.ws }}</code></div>
         </div>
       </div>
     </div>
@@ -63,7 +63,10 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { api } from '../api/index.js'
+import { useI18n } from '../i18n.js'
+import { fmtDate, statusLabel } from '../utils/format.js'
 
+const { t: $t } = useI18n()
 const stats = ref([])
 const recent = ref([])
 const sys = ref(null)
@@ -82,7 +85,6 @@ onMounted(async () => {
 
     const contentTypes = (types.types||[]).filter(t => !['user','api_key','webhook','audit_log','activitypub_activity','revision'].includes(t.name))
 
-    // Fetch counts per content type
     const counts = await Promise.all(contentTypes.map(async t => {
       try {
         const r = await api.listContent(t.name, { limit: 1 })
@@ -93,7 +95,6 @@ onMounted(async () => {
 
     // Status distribution chart
     const statuses = ['published', 'draft', 'scheduled', 'archived']
-    const statusLabels = { published: '已发布', draft: '草稿', scheduled: '定时', archived: '归档' }
     const statusColors = { published: '#10B981', draft: '#F59E0B', scheduled: '#6366F1', archived: '#9CA3AF' }
     const statusCounts = await Promise.all(statuses.map(async s => {
       let total = 0
@@ -103,7 +104,7 @@ onMounted(async () => {
           total += r.total || 0
         } catch {}
       }
-      return { label: statusLabels[s], count: total, color: statusColors[s] }
+      return { label: statusLabel(s), count: total, color: statusColors[s] }
     }))
     const maxStatus = Math.max(1, ...statusCounts.map(s => s.count))
     statusChart.data = statusCounts
@@ -129,8 +130,6 @@ onMounted(async () => {
   } catch (e) { console.error(e) }
 })
 
-function statusLabel(s) { return s === 'published' ? '已发布' : s === 'draft' ? '草稿' : s === 'archived' ? '已归档' : s || '-' }
-function fmtDate(d) { return d ? new Date(d).toLocaleDateString('zh-CN') : '-' }
 function formatUptime(s) {
   var h = Math.floor(s/3600), m = Math.floor((s%3600)/60);
   return h > 0 ? h+'h '+m+'m' : m+'m '+(s%60)+'s';

@@ -1,13 +1,13 @@
 <template>
   <div>
     <div class="header">
-      <h1 class="page-title">💬 评论管理</h1>
+      <h1 class="page-title">{{ $t('comments.title') }}</h1>
       <div class="search-bar">
         <select v-model="statusFilter" @change="load" class="input select-sm">
-          <option value="">全部</option>
-          <option value="pending">待审核</option>
-          <option value="approved">已通过</option>
-          <option value="spam">垃圾</option>
+          <option value="">{{ $t('common.all') }}</option>
+          <option value="pending">{{ $t('comments.status_pending') }}</option>
+          <option value="approved">{{ $t('comments.status_approved') }}</option>
+          <option value="spam">{{ $t('comments.status_spam') }}</option>
         </select>
       </div>
     </div>
@@ -15,37 +15,37 @@
     <table v-if="comments.length" class="table">
       <thead>
         <tr>
-          <th style="width:180px">作者</th>
-          <th>内容</th>
-          <th style="width:80px">文章</th>
-          <th style="width:80px">状态</th>
-          <th style="width:100px">时间</th>
-          <th style="width:160px">操作</th>
+          <th style="width:180px">{{ $t('comments.author') }}</th>
+          <th>{{ $t('comments.content') }}</th>
+          <th style="width:80px">{{ $t('comments.post') }}</th>
+          <th style="width:80px">{{ $t('comments.status') }}</th>
+          <th style="width:100px">{{ $t('comments.time') }}</th>
+          <th style="width:160px">{{ $t('comments.actions') }}</th>
         </tr>
       </thead>
       <tbody>
         <tr v-for="c in comments" :key="c.id" :class="{ pending: c.data?.status === 'pending' }">
           <td>
-            <strong>{{ c.data?.author || '匿名' }}</strong>
+            <strong>{{ c.data?.author || $t('comments.anonymous') }}</strong>
             <div style="font-size:11px;color:var(--text-muted)">{{ c.data?.email || '' }}</div>
           </td>
           <td><div class="comment-body">{{ c.data?.body }}</div></td>
           <td>
             <a v-if="c.data?.postId" :href="`/post/${c.data.postId}`" target="_blank" class="post-link">
-              🔗 查看
+              {{ $t('comments.view') }}
             </a>
           </td>
           <td><span :class="`badge badge-${statusBadge(c.data?.status)}`">{{ statusLabel(c.data?.status) }}</span></td>
           <td class="date-col">{{ fmtDate(c.createdAt, 'date') }}</td>
           <td>
-            <button v-if="c.data?.status === 'pending'" @click="approve(c.id)" class="btn-sm" style="color:#065F46">✓ 通过</button>
-            <button v-if="c.data?.status !== 'spam'" @click="markSpam(c.id)" class="btn-sm">🚫 垃圾</button>
-            <button @click="remove(c.id)" class="btn-sm btn-danger">删除</button>
+            <button v-if="c.data?.status === 'pending'" @click="approve(c.id)" class="btn-sm" style="color:#065F46">{{ $t('comments.approve') }}</button>
+            <button v-if="c.data?.status !== 'spam'" @click="markSpam(c.id)" class="btn-sm">{{ $t('comments.spam') }}</button>
+            <button @click="remove(c.id)" class="btn-sm btn-danger">{{ $t('common.status_archived') }}</button>
           </td>
         </tr>
       </tbody>
     </table>
-    <p v-else class="empty">暂无评论</p>
+    <p v-else class="empty">{{ $t('comments.no_items') }}</p>
   </div>
 </template>
 
@@ -53,7 +53,9 @@
 import { ref, onMounted } from 'vue'
 import { api } from '../api/index.js'
 import { fmtDate, notifyError } from '../utils/format.js'
+import { useI18n } from '../i18n.js'
 
+const { t: $t, statusLabel } = useI18n()
 const comments = ref([])
 const statusFilter = ref('pending')
 
@@ -70,27 +72,22 @@ async function approve(id) {
   try {
     await api.updateContent('comment', id, { data: { status: 'approved' } })
     load()
-  } catch (e) { notifyError('操作', e) }
+  } catch (e) { notifyError($t('comments.approve_error'), e) }
 }
 
 async function markSpam(id) {
   try {
     await api.updateContent('comment', id, { data: { status: 'spam' } })
     load()
-  } catch (e) { notifyError('操作', e) }
+  } catch (e) { notifyError($t('comments.spam_error'), e) }
 }
 
 async function remove(id) {
-  if (!confirm('确认删除？')) return
+  if (!confirm($t('contentList.delete_confirm'))) return
   try {
     await api.deleteContent('comment', id)
     load()
-  } catch (e) { notifyError('删除', e) }
-}
-
-function statusLabel(s) {
-  const map = { pending: '待审核', approved: '已通过', spam: '垃圾' }
-  return map[s] || s
+  } catch (e) { notifyError($t('comments.status_spam'), e) }
 }
 
 function statusBadge(s) {

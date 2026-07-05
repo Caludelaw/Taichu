@@ -1,7 +1,7 @@
 <template>
   <div v-if="auth.isLoggedIn" class="layout">
     <!-- Hamburger toggle for mobile -->
-    <button class="menu-toggle" @click="sidebarOpen = !sidebarOpen" :aria-label="sidebarOpen ? '关闭菜单' : '打开菜单'">
+    <button class="menu-toggle" @click="sidebarOpen = !sidebarOpen" :aria-label="sidebarOpen ? $t('nav.close_menu') : $t('nav.open_menu')">
       <span></span><span></span><span></span>
     </button>
 
@@ -9,40 +9,40 @@
     <div v-if="sidebarOpen" class="sidebar-overlay" @click="sidebarOpen = false"></div>
 
     <aside class="sidebar" :class="{ open: sidebarOpen }">
-      <div class="logo" @click="$router.push('/dashboard'); sidebarOpen = false">⚡ Taichu</div>
+      <div class="logo" @click="$router.push('/dashboard'); sidebarOpen = false">{{ $t('app.logo') }}</div>
       <nav>
-        <div class="nav-section">内容</div>
+        <div class="nav-section">{{ $t('nav.section_content') }}</div>
         <template v-for="t in types" :key="t.name">
           <router-link :to="`/content/${t.name}`" class="nav-item" @click="sidebarOpen = false">{{ t.label }}</router-link>
         </template>
-        <router-link to="/media" class="nav-item" @click="sidebarOpen = false">🖼️ 媒体库</router-link>
-        <router-link to="/categories" class="nav-item" @click="sidebarOpen = false">📂 栏目管理</router-link>
-        <router-link to="/tags" class="nav-item" @click="sidebarOpen = false">🏷️ 标签管理</router-link>
-        <router-link to="/comments" class="nav-item" @click="sidebarOpen = false">💬 评论管理</router-link>
-        <router-link to="/navigation" class="nav-item" @click="sidebarOpen = false">🧭 导航菜单</router-link>
+        <router-link to="/media" class="nav-item" @click="sidebarOpen = false">{{ $t('nav.media') }}</router-link>
+        <router-link to="/categories" class="nav-item" @click="sidebarOpen = false">{{ $t('nav.categories') }}</router-link>
+        <router-link to="/tags" class="nav-item" @click="sidebarOpen = false">{{ $t('nav.tags') }}</router-link>
+        <router-link to="/comments" class="nav-item" @click="sidebarOpen = false">{{ $t('nav.comments') }}</router-link>
+        <router-link to="/navigation" class="nav-item" @click="sidebarOpen = false">{{ $t('nav.navigation') }}</router-link>
 
-        <div class="nav-section">管理</div>
-        <router-link to="/users" class="nav-item" @click="sidebarOpen = false">👥 用户管理</router-link>
-        <router-link to="/apikeys" class="nav-item" @click="sidebarOpen = false">🔑 API Keys</router-link>
-        <router-link to="/webhooks" class="nav-item" @click="sidebarOpen = false">🔗 Webhooks</router-link>
-        <router-link to="/settings" class="nav-item" @click="sidebarOpen = false">⚙️ 站点配置</router-link>
-        <router-link to="/theme" class="nav-item" @click="sidebarOpen = false">🎨 外观主题</router-link>
-        <router-link to="/theme-manager" class="nav-item" @click="sidebarOpen = false">📦 主题管理</router-link>
+        <div class="nav-section">{{ $t('nav.section_manage') }}</div>
+        <router-link to="/users" class="nav-item" @click="sidebarOpen = false">{{ $t('nav.users') }}</router-link>
+        <router-link to="/apikeys" class="nav-item" @click="sidebarOpen = false">{{ $t('nav.apikeys') }}</router-link>
+        <router-link to="/webhooks" class="nav-item" @click="sidebarOpen = false">{{ $t('nav.webhooks') }}</router-link>
+        <router-link to="/settings" class="nav-item" @click="sidebarOpen = false">{{ $t('nav.settings') }}</router-link>
+        <router-link to="/theme" class="nav-item" @click="sidebarOpen = false">{{ $t('nav.theme') }}</router-link>
+        <router-link to="/theme-manager" class="nav-item" @click="sidebarOpen = false">{{ $t('nav.theme_manager') }}</router-link>
 
-        <div class="nav-section">安全</div>
-        <router-link to="/audit" class="nav-item" @click="sidebarOpen = false">📋 审计日志</router-link>
-        <router-link to="/workflow" class="nav-item" @click="sidebarOpen = false">✅ 审核队列</router-link>
+        <div class="nav-section">{{ $t('nav.section_security') }}</div>
+        <router-link to="/audit" class="nav-item" @click="sidebarOpen = false">{{ $t('nav.audit') }}</router-link>
+        <router-link to="/workflow" class="nav-item" @click="sidebarOpen = false">{{ $t('nav.workflow') }}</router-link>
 
-        <div class="nav-section">开发</div>
-        <router-link to="/plugins" class="nav-item" @click="sidebarOpen = false">🧩 插件市场</router-link>
-        <router-link to="/agents" class="nav-item" @click="sidebarOpen = false">🤖 Agent 市场</router-link>
-        <router-link to="/pipelines" class="nav-item" @click="sidebarOpen = false">🔄 管道模板</router-link>
-        <router-link to="/api-docs" class="nav-item" @click="sidebarOpen = false">📖 API 文档</router-link>
-        <a href="/api/graphql" target="_blank" class="nav-item">🔬 GraphiQL</a>
-        <a href="/ws-test.html" target="_blank" class="nav-item">📡 WS 测试</a>
+        <div class="nav-section">{{ $t('nav.section_dev') }}</div>
+        <router-link to="/plugins" class="nav-item" @click="sidebarOpen = false">{{ $t('nav.plugins') }}</router-link>
+        <router-link to="/agents" class="nav-item" @click="sidebarOpen = false">{{ $t('nav.agents') }}</router-link>
+        <router-link to="/pipelines" class="nav-item" @click="sidebarOpen = false">{{ $t('nav.pipelines') }}</router-link>
+        <router-link to="/api-docs" class="nav-item" @click="sidebarOpen = false">{{ $t('nav.api_docs') }}</router-link>
+        <a href="/api/graphql" target="_blank" class="nav-item">{{ $t('nav.graphiql') }}</a>
+        <a href="/ws-test.html" target="_blank" class="nav-item">{{ $t('nav.ws_test') }}</a>
       </nav>
       <div class="sidebar-footer">
-        <button class="btn-theme" @click="toggleDark" :title="isDark ? '切换亮色模式' : '切换暗色模式'">
+        <button class="btn-theme" @click="toggleDark" :title="isDark ? $t('nav.toggle_light') : $t('nav.toggle_dark')">
           {{ isDark ? '☀️' : '🌙' }}
         </button>
         <div class="lang-switch">
@@ -51,7 +51,7 @@
           </select>
         </div>
         <span class="user">{{ auth.user?.username }}</span>
-        <button @click="logout" class="btn-logout">退出</button>
+        <button @click="logout" class="btn-logout">{{ $t('nav.logout') }}</button>
       </div>
     </aside>
     <main class="main">
@@ -71,6 +71,7 @@ import { useI18n } from './i18n.js'
 const router = useRouter()
 const types = ref([])
 const i18n = useI18n()
+const $t = i18n.t
 const locale = ref(i18n.locale.value)
 const isDark = ref(false)
 const sidebarOpen = ref(false)

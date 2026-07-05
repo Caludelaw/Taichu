@@ -1,19 +1,19 @@
 <template>
   <div>
     <div class="header">
-      <h1 class="page-title">👥 用户管理</h1>
-      <span class="page-info">共 {{ users.length }} 位用户</span>
+      <h1 class="page-title">{{ $t('users.title') }}</h1>
+      <span class="page-info">{{ $t('users.count', { n: users.length }) }}</span>
     </div>
 
     <table v-if="users.length" class="table">
       <thead>
         <tr>
-          <th>用户名</th>
-          <th>邮箱</th>
-          <th style="width:100px">角色</th>
-          <th>注册时间</th>
-          <th>状态</th>
-          <th style="width:200px">操作</th>
+          <th>{{ $t('users.col_username') }}</th>
+          <th>{{ $t('users.col_email') }}</th>
+          <th style="width:100px">{{ $t('users.col_role') }}</th>
+          <th>{{ $t('users.col_registered') }}</th>
+          <th>{{ $t('users.col_status') }}</th>
+          <th style="width:200px">{{ $t('users.col_actions') }}</th>
         </tr>
       </thead>
       <tbody>
@@ -22,27 +22,27 @@
           <td>{{ u.data?.email || '-' }}</td>
           <td>
             <select v-model="u.data.role" @change="updateRole(u)" class="role-select">
-              <option value="admin">管理员</option>
-              <option value="editor">编辑</option>
-              <option value="user">用户</option>
+              <option value="admin">{{ $t('users.role_admin') }}</option>
+              <option value="editor">{{ $t('users.role_editor') }}</option>
+              <option value="user">{{ $t('users.role_user') }}</option>
             </select>
           </td>
           <td class="date-col">{{ fmtDate(u.createdAt, 'date') }}</td>
           <td>
             <span :class="`badge ${u.status === 'active' ? 'badge-published' : 'badge-archived'}`">
-              {{ u.status === 'active' ? '正常' : '禁用' }}
+              {{ u.status === 'active' ? $t('users.status_active') : $t('users.status_disabled') }}
             </span>
           </td>
           <td>
             <button @click="toggleUser(u)" class="btn-sm">
-              {{ u.status === 'active' ? '禁用' : '启用' }}
+              {{ u.status === 'active' ? $t('users.disable') : $t('users.enable') }}
             </button>
-            <button @click="resetPassword(u)" class="btn-sm" title="重置密码">🔑</button>
+            <button @click="resetPassword(u)" class="btn-sm" :title="$t('users.reset_error')">{{ $t('users.reset_password') }}</button>
           </td>
         </tr>
       </tbody>
     </table>
-    <p v-else class="empty">暂无用户</p>
+    <p v-else class="empty">{{ $t('users.no_users') }}</p>
   </div>
 </template>
 
@@ -50,7 +50,9 @@
 import { ref, onMounted } from 'vue'
 import { api } from '../api/index.js'
 import { fmtDate, notifyError } from '../utils/format.js'
+import { useI18n } from '../i18n.js'
 
+const { t: $t } = useI18n()
 const users = ref([])
 
 onMounted(async () => {
@@ -68,20 +70,20 @@ async function toggleUser(u) {
   try {
     await api.updateContent('user', u.id, { status: newStatus })
     u.status = newStatus
-  } catch (e) { notifyError('操作', e) }
+  } catch (e) { notifyError($t('users.action_error'), e) }
 }
 
 async function updateRole(u) {
   try {
     await api.updateContent('user', u.id, { data: { ...u.data, role: u.data.role } })
-  } catch (e) { notifyError('更新角色', e) }
+  } catch (e) { notifyError($t('users.role_error'), e) }
 }
 
 function resetPassword(u) {
   const email = u.data?.email
-  if (!email) { notifyError('重置密码', '该用户没有邮箱'); return }
-  if (!confirm(`确定重置 ${u.data?.username} 的密码？`)) return
-  notifyError('重置密码', '请通过邮件链接重置（尚未实现邮件发送）')
+  if (!email) { notifyError($t('users.reset_error'), $t('users.no_email')); return }
+  if (!confirm($t('users.reset_confirm', { name: u.data?.username }))) return
+  notifyError($t('users.reset_error'), $t('users.reset_unavailable'))
 }
 </script>
 

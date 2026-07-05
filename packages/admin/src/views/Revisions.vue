@@ -1,81 +1,62 @@
 <template>
   <div>
-    <h1 class="page-title">📜 版本历史</h1>
-    <router-link :to="`/content/${type}/${contentId}`" class="back-link">← 返回编辑</router-link>
-    <div v-if="loading" class="loading">加载中...</div>
-    <div v-if="!loading && revisions.length" class="rev-list">
-      <div v-for="(r, i) in revisions" :key="r.id" class="rev-item">
-        <div class="rev-header">
-          <span class="rev-idx">#{{ revisions.length - i }}</span>
-          <span class="rev-time">{{ fmtTime(r.timestamp) }}</span>
-          <span class="rev-author">{{ r.authorType === 'agent' ? '🤖' : '👤' }} {{ r.author }}</span>
-          <button @click="restore(r.id)" class="btn-sm btn-green">恢复此版本</button>
+    <h2 class="page-title">{{ $t('revisions.title') }}</h2>
+
+    <div v-if="revisions.length" class="timeline">
+      <div v-for="(r, i) in revisions" :key="r.id || i" class="rev-item">
+        <div class="rev-version">v{{ r.version || (revisions.length - i) }}</div>
+        <div class="rev-meta">
+          <span class="rev-time">{{ fmtDate(r.createdAt) }}</span>
+          <span>{{ r.authorType === 'agent' ? $t('revisions.col_author_agent') : $t('revisions.col_author_user') }} {{ r.authorId?.substring(0, 8) }}</span>
         </div>
-        <div v-if="r.diff && r.diff.length" class="diff">
-          <div v-for="d in r.diff" :key="d.field" class="diff-line">
-            <span class="diff-field">{{ d.field }}</span>
-            <span class="diff-from diff-removed">- {{ truncate(d.from) }}</span>
-            <span class="diff-to diff-added">+ {{ truncate(d.to) }}</span>
-          </div>
-        </div>
-        <div v-else class="no-diff">与前一版本无差异</div>
+        <div class="rev-summary">{{ r.summary || '-' }}</div>
+        <button class="btn-sm" @click="restore(r)">{{ $t('revisions.restore') }}</button>
       </div>
     </div>
-    <div v-else class="empty">暂无版本历史</div>
+    <p v-else class="empty">{{ $t('revisions.no_items') }}</p>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { api } from '../api/index.js'
+import { notifyError } from '../utils/format.js'
+import { useI18n } from '../i18n.js'
 
-const props = defineProps({ type: String, id: String })
-const contentId = props.id
-const type = props.type
+const { t: $t } = useI18n()
+const route = useRoute()
 const revisions = ref([])
-const loading = ref(true)
 
 onMounted(async () => {
   try {
-    const res = await api.getRevisions(type, contentId)
-    revisions.value = res.revisions || []
+    const type = route.query.type
+    const id = route.query.id
+    if (type && id) {
+      const res = await api.getRevisions(type, id)
+      revisions.value = res.revisions || []
+    }
   } catch (e) { console.error(e) }
-  loading.value = false
 })
 
-async function restore(revId) {
-  if (!confirm('确认恢复到此版本？')) return
+async function restore(r) {
+  if (!confirm($t('revisions.restore_confirm', { version: r.version }))) return
   try {
-    await fetch(`/api/content/${type}/${contentId}/revisions/${revId}/restore`, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${localStorage.getItem('taichu_token')}` }
-    })
-    alert('已恢复')
-    location.reload()
-  } catch (e) { alert('恢复失败: ' + e.message) }
+    await api.restoreRevision(route.query.type, route.query.id, r.id)
+    alert($t('revisions.restore_success', { version: r.version }))
+  } catch (e) { notifyError($t('revisions.restore_error'), e) }
 }
 
-function truncate(v) {
-  return typeof v === 'string' ? v.substring(0, 100) + (v.length > 100 ? '...' : '') : JSON.stringify(v).substring(0, 80)
-}
-function fmtTime(t) { return t ? new Date(t).toLocaleString('zh-CN') : '' }
+function fmtDate(d) { return d ? new Date(d).toLocaleString() : '-' }
 </script>
 
 <style scoped>
-.page-title { font-size: 24px; margin-bottom: 8px; }
-.back-link { color: var(--primary); text-decoration: none; font-size: 14px; display: inline-block; margin-bottom: 16px; }
-.rev-list { display: flex; flex-direction: column; gap: 12px; }
-.rev-item { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
-.rev-header { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; font-size: 13px; }
-.rev-idx { font-weight: 700; color: var(--primary); }
-.rev-time { color: var(--text-secondary); }
-.rev-author { color: var(--text-secondary); }
-.btn-sm { padding: 4px 12px; border: none; border-radius: 4px; font-size: 12px; cursor: pointer; margin-left: auto; }
-.btn-green { background: #10B981; color: #fff; }
-.diff { margin-top: 8px; padding: 8px 12px; background: var(--bg); border-radius: 4px; font-size: 12px; font-family: monospace; }
-.diff-line { margin-bottom: 4px; display: flex; gap: 8px; align-items: baseline; }
-.diff-field { color: var(--text-secondary); min-width: 80px; font-weight: 600; }
-.diff-removed { color: #EF4444; }
-.diff-added { color: #10B981; }
-.no-diff, .empty { padding: 16px; text-align: center; color: var(--text-muted); font-size: 13px; }
+.page-title { font-size: 22px; margin-bottom: 24px; }
+.timeline { max-width: 600px; }
+.rev-item { padding: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 12px; }
+.rev-version { font-size: 14px; font-weight: 700; color: var(--primary); margin-bottom: 4px; }
+.rev-meta { font-size: 12px; color: var(--text-muted); margin-bottom: 8px; display: flex; gap: 16px; }
+.rev-summary { font-size: 13px; color: var(--text-secondary); margin-bottom: 8px; }
+.btn-sm { padding: 4px 12px; font-size: 12px; border: 1px solid var(--border); background: var(--surface); border-radius: 4px; cursor: pointer; }
+.empty { color: var(--text-secondary); font-size: 14px; margin-top: 40px; text-align: center; }
 </style>

@@ -1,34 +1,34 @@
 <template>
   <div>
-    <h1 class="page-title">📋 审计日志</h1>
+    <h1 class="page-title">{{ $t('audit.title') }}</h1>
     <div class="toolbar">
       <select v-model="filter.action" @change="load" class="input" style="width:160px">
-        <option value="">全部操作</option>
-        <option value="create">创建</option>
-        <option value="update">更新</option>
-        <option value="delete">删除</option>
-        <option value="publish">发布</option>
-        <option value="review_requested">请求审核</option>
-        <option value="approved">已批准</option>
-        <option value="rejected">已驳回</option>
+        <option value="">{{ $t('audit.all_actions') }}</option>
+        <option value="create">{{ $t('audit.action_create') }}</option>
+        <option value="update">{{ $t('audit.action_update') }}</option>
+        <option value="delete">{{ $t('audit.action_delete') }}</option>
+        <option value="publish">{{ $t('audit.action_publish') }}</option>
+        <option value="review_requested">{{ $t('audit.action_request_review') }}</option>
+        <option value="approved">{{ $t('audit.action_approve') }}</option>
+        <option value="rejected">{{ $t('audit.action_reject') }}</option>
       </select>
-      <button @click="load" class="btn">刷新</button>
+      <button @click="load" class="btn">{{ $t('common.search') }}</button>
     </div>
 
     <div class="table-wrap">
       <table>
-        <thead><tr><th>时间</th><th>操作</th><th>操作者</th><th>资源</th><th>详情</th></tr></thead>
+        <thead><tr><th>{{ $t('audit.col_time') }}</th><th>{{ $t('audit.col_action') }}</th><th>{{ $t('audit.col_actor') }}</th><th>{{ $t('audit.col_target') }}</th><th>{{ $t('contentEdit.edit') }}</th></tr></thead>
         <tbody>
           <tr v-for="e in entries" :key="e.id">
             <td class="time">{{ fmtTime(e.createdAt) }}</td>
             <td><span :class="'tag tag-' + e.action">{{ e.action }}</span></td>
-            <td>{{ e.actorType === 'agent' ? '🤖' : '👤' }} {{ e.actorId?.substring(0, 12) }}</td>
+            <td>{{ e.actorType === 'agent' ? $t('audit.col_actor_agent') : $t('audit.col_actor_user') }} {{ e.actorId?.substring(0, 12) }}</td>
             <td>{{ e.resourceType }}/{{ e.resourceId?.substring(0, 8) }}</td>
             <td>{{ e.detail?.title || '-' }}</td>
           </tr>
         </tbody>
       </table>
-      <div v-if="!entries.length" class="empty">暂无审计日志</div>
+      <div v-if="!entries.length" class="empty">{{ $t('audit.no_items') }}</div>
     </div>
   </div>
 </template>
@@ -36,7 +36,9 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { api } from '../api/index.js'
+import { useI18n } from '../i18n.js'
 
+const { t: $t } = useI18n()
 const entries = ref([])
 const filter = ref({ action: '' })
 
@@ -47,7 +49,7 @@ async function load() {
     entries.value = res.entries || []
   } catch (e) { console.error(e) }
 }
-function fmtTime(t) { return t ? new Date(t).toLocaleString('zh-CN') : '' }
+function fmtTime(t) { return t ? new Date(t).toLocaleString() : '' }
 </script>
 
 <style scoped>

@@ -1,35 +1,35 @@
 <template>
   <div>
     <div class="header">
-      <h2 class="page-title">🔑 API Keys</h2>
-      <button class="btn" @click="showCreate = true">+ 生成新 Key</button>
+      <h2 class="page-title">{{ $t('apikeys.title') }}</h2>
+      <button class="btn" @click="showCreate = true">{{ $t('apikeys.generate') }}</button>
     </div>
 
     <div v-if="showCreate" class="create-box">
-      <input v-model="newLabel" placeholder="Key 标签 (如: Super Niuma Agent)" />
+      <input v-model="newLabel" :placeholder="$t('apikeys.label')" />
       <div class="scope-section">
-        <label class="scope-label">权限范围:</label>
+        <label class="scope-label">{{ $t('apikeys.scopes') }}:</label>
         <div class="scope-grid">
           <label v-for="s in availableScopes" :key="s.value" class="scope-chip">
             <input type="checkbox" :value="s.value" v-model="selectedScopes" />
             <span>{{ s.label }}</span>
           </label>
         </div>
-        <p class="scope-hint">默认: 只读所有内容。选中 "*:*" 为管理员权限。</p>
+        <p class="scope-hint">{{ $t('apikeys.scope_hint') }}</p>
       </div>
       <div class="create-actions">
-        <button class="btn" @click="create">生成</button>
-        <button class="btn btn-cancel" @click="showCreate = false">取消</button>
+        <button class="btn" @click="create">{{ $t('common.save') }}</button>
+        <button class="btn btn-cancel" @click="showCreate = false">{{ $t('common.cancel') }}</button>
       </div>
       <div v-if="newKey" class="new-key-display">
-        <p class="warn">⚠️ 复制此 Key，关闭后不可查看：</p>
+        <p class="warn">{{ $t('apikeys.copy_warning') }}</p>
         <code>{{ newKey }}</code>
       </div>
     </div>
 
     <table v-if="keys.length" class="table">
       <thead>
-        <tr><th>前缀</th><th>标签</th><th>权限</th><th>创建时间</th><th>操作</th></tr>
+        <tr><th>{{ $t('apikeys.prefix') }}</th><th>{{ $t('apikeys.label') }}</th><th>{{ $t('apikeys.scopes') }}</th><th>{{ $t('apikeys.created') }}</th><th>{{ $t('nav.logout') }}</th></tr>
       </thead>
       <tbody>
         <tr v-for="k in keys" :key="k.prefix">
@@ -38,19 +38,21 @@
           <td><span class="scope-badge">{{ formatScopes(k.scopes) }}</span></td>
           <td class="date">{{ fmtDate(k.createdAt) }}</td>
           <td>
-            <button class="btn-sm btn-danger" @click="revoke(k.prefix)">撤销</button>
+            <button class="btn-sm btn-danger" @click="revoke(k.prefix)">{{ $t('apikeys.revoke') }}</button>
           </td>
         </tr>
       </tbody>
     </table>
-    <p v-else class="empty">暂无 API Key</p>
+    <p v-else class="empty">{{ $t('apikeys.no_keys') }}</p>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
 import { api } from '../api/index.js'
+import { useI18n } from '../i18n.js'
 
+const { t: $t } = useI18n()
 const keys = ref([])
 const showCreate = ref(false)
 const newLabel = ref('')
@@ -58,21 +60,21 @@ const newKey = ref('')
 const selectedScopes = ref(['*:read'])
 
 const availableScopes = [
-  { value: '*:*', label: '全部权限 (管理员)' },
-  { value: '*:read', label: '读取所有' },
-  { value: '*:write', label: '写入所有' },
-  { value: 'article:read', label: '文章 读' },
-  { value: 'article:write', label: '文章 写' },
-  { value: 'media:read', label: '媒体 读' },
-  { value: 'media:write', label: '媒体 写' },
-  { value: 'page:read', label: '页面 读' },
-  { value: 'page:write', label: '页面 写' },
+  { value: '*:*', label: $t('apikeys.scope_all') },
+  { value: '*:read', label: $t('apikeys.scope_read') },
+  { value: '*:write', label: $t('apikeys.scope_all') },
+  { value: 'article:read', label: 'Article: Read' },
+  { value: 'article:write', label: 'Article: Write' },
+  { value: 'media:read', label: 'Media: Read' },
+  { value: 'media:write', label: 'Media: Write' },
+  { value: 'page:read', label: 'Page: Read' },
+  { value: 'page:write', label: 'Page: Write' },
 ]
 
 function formatScopes(scopes) {
   if (!scopes || scopes.length === 0) return '*:*'
-  if (scopes.includes('*:*')) return '全部'
-  if (scopes.length === 1 && scopes[0] === '*:read') return '只读'
+  if (scopes.includes('*:*')) return $t('common.all')
+  if (scopes.length === 1 && scopes[0] === '*:read') return $t('apikeys.scope_read')
   return scopes.slice(0, 3).join(', ') + (scopes.length > 3 ? '...' : '')
 }
 
@@ -98,7 +100,7 @@ async function create() {
 }
 
 async function revoke(prefix) {
-  if (!confirm('撤销后该 Key 立即失效，确认？')) return
+  if (!confirm($t('apikeys.revoke_confirm'))) return
   try {
     await api.revokeApiKey(prefix)
     keys.value = keys.value.filter(k => k.prefix !== prefix)
@@ -108,7 +110,7 @@ async function revoke(prefix) {
 }
 
 function fmtDate(d) {
-  return d ? new Date(d).toLocaleString('zh-CN') : '-'
+  return d ? new Date(d).toLocaleString() : '-'
 }
 
 onMounted(load)

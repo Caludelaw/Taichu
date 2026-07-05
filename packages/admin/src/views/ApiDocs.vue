@@ -1,9 +1,9 @@
 <template>
   <div>
     <div class="header">
-      <h2>API 参考文档</h2>
+      <h2>{{ $t('apiDocs.title') }}</h2>
     </div>
-    <p class="desc">Taichu CMS 全部 REST / GraphQL / WebSocket 端点，可直接复制 curl 命令使用。</p>
+    <p class="desc">Taichu CMS — REST / GraphQL / WebSocket API Reference</p>
 
     <div class="toc">
       <a v-for="s in sections" :key="s.id" :href="`#${s.id}`" class="toc-link">{{ s.label }}</a>
@@ -16,15 +16,15 @@
           <span class="ep-method" :class="ep.method">{{ ep.method }}</span>
           <code class="ep-path">{{ ep.path }}</code>
           <span v-if="ep.auth" class="ep-auth">🔒 {{ ep.auth }}</span>
-          <span v-else class="ep-auth public">🌐 公开</span>
+          <span v-else class="ep-auth public">🌐 Public</span>
         </div>
         <p class="ep-desc">{{ ep.desc }}</p>
         <details v-if="ep.curl" class="ep-curl">
-          <summary>curl 示例</summary>
+          <summary>curl Example</summary>
           <pre><code>{{ ep.curl }}</code></pre>
         </details>
         <details v-if="ep.response" class="ep-resp">
-          <summary>响应示例</summary>
+          <summary>Response</summary>
           <pre><code>{{ ep.response }}</code></pre>
         </details>
       </div>
@@ -33,6 +33,9 @@
 </template>
 
 <script setup>
+import { useI18n } from '../i18n.js'
+const { t: $t } = useI18n()
+
 const sections = [
   {
     id: 'auth',

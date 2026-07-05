@@ -4,46 +4,50 @@
  */
 /* global alert */
 
+import { useI18n } from '../i18n.js';
+
 /**
  * Format an ISO date string for display.
+ * Uses the current i18n locale for date formatting.
  * @param {string|Date|null} d
  * @param {'full'|'date'} [mode='full'] — 'full' = datetime, 'date' = date only
  * @returns {string}
  */
 export function fmtDate(d, mode = 'full') {
-  if (!d) return '-'
+  if (!d) return '-';
+  const { locale } = useI18n();
+  const loc = locale.value === 'zh-CN' ? 'zh-CN' : locale.value === 'ja' ? 'ja-JP' : 'en-US';
   if (mode === 'date') {
-    return new Date(d).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })
+    return new Date(d).toLocaleDateString(loc, { year: 'numeric', month: 'long', day: 'numeric' });
   }
-  return new Date(d).toLocaleString('zh-CN')
+  return new Date(d).toLocaleString(loc);
 }
 
 /**
- * Map a content status code to a human-readable Chinese label.
+ * Status label — delegates to i18n for locale-aware display.
+ * @param {string} s — status code
+ * @returns {string}
  */
-const STATUS_MAP = {
-  published: '已发布', draft: '草稿', scheduled: '定时', archived: '已归档',
-  active: '启用', revoked: '已撤销', pending: '待审核', rejected: '已驳回'
-}
 export function statusLabel(s) {
-  return STATUS_MAP[s] || s || '-'
+  const { statusLabel: sl } = useI18n();
+  return sl(s);
 }
 
 /**
  * Show a user-facing error notification.
  * Uses alert() for now; can be upgraded to toast/notification later.
- * @param {string} action — the action that failed (e.g. '保存', '删除')
+ * @param {string} action — the action that failed (i18n key or string)
  * @param {Error|string} err
  */
 export function notifyError(action, err) {
-  const msg = err?.message || String(err || '')
-  alert(`${action}失败: ${msg}`)
+  const msg = err?.message || String(err || '');
+  alert(`${action}: ${msg}`);
 }
 
 /**
  * Truncate a string to maxLen with ellipsis.
  */
 export function truncate(s, maxLen = 80) {
-  const str = String(s || '')
-  return str.length > maxLen ? str.substring(0, maxLen) + '...' : str
+  const str = String(s || '');
+  return str.length > maxLen ? str.substring(0, maxLen) + '...' : str;
 }

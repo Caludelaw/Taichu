@@ -2,14 +2,14 @@
   <div>
     <div class="header">
       <div class="header-left">
-        <h2>{{ isNew ? '新建' : '编辑' }}{{ typeLabel }}</h2>
+        <h2>{{ (isNew ? $t('contentEdit.new') : $t('contentEdit.edit')) + ' ' + typeLabel }}</h2>
         <span v-if="autoSaveStatus" class="autosave-indicator" :class="{ saving: autoSaveStatus === 'saving' }">
-          {{ autoSaveStatus === 'saving' ? '保存中...' : `已自动保存 ${autoSaveTime}` }}
+          {{ autoSaveStatus === 'saving' ? $t('contentEdit.saving') : $t('contentEdit.auto_saved') + ' ' + autoSaveTime }}
         </span>
       </div>
       <div class="actions">
-        <button class="btn" @click="save('draft')">保存草稿</button>
-        <button class="btn btn-publish" @click="save('published')">发布</button>
+        <button class="btn" @click="save('draft')">{{ $t('contentEdit.save_draft') }}</button>
+        <button class="btn btn-publish" @click="save('published')">{{ $t('contentEdit.publish') }}</button>
       </div>
     </div>
 
@@ -31,7 +31,7 @@
         </label>
 
         <select v-else-if="f.type === 'reference' && f.refType" v-model="formData[f.name]">
-          <option value="">— 选择 —</option>
+          <option value="">{{ $t('contentEdit.select_option') }}</option>
         </select>
 
         <select v-else-if="f.type === 'enum' && f.values"
@@ -41,11 +41,11 @@
 
         <textarea v-else-if="f.type === 'json' && f.name !== 'body'"
           v-model="formData[f.name]"
-          rows="12" placeholder="JSON 内容..."></textarea>
+          rows="12" :placeholder="$t('contentEdit.json_placeholder')"></textarea>
 
         <RichEditor v-else-if="f.type === 'json' && f.name === 'body'"
           v-model="formData[f.name]"
-          :placeholder="'输入正文...'" />
+          :placeholder="$t('contentEdit.body_placeholder')" />
 
         <input v-else v-model="formData[f.name]"
           type="text"
@@ -54,7 +54,7 @@
     </div>
 
     <p v-if="error" class="error">{{ error }}</p>
-    <p v-else-if="loading" class="info">保存中...</p>
+    <p v-else-if="loading" class="info">{{ $t('contentEdit.saving') }}</p>
 
     <RelationshipsManager v-if="!isNew && route.params.id" :doc-id="route.params.id" :doc-type="props.type" />
   </div>
@@ -66,7 +66,9 @@ import { useRoute, useRouter } from 'vue-router'
 import { api } from '../api/index.js'
 import RichEditor from '../components/RichEditor.vue'
 import RelationshipsManager from '../components/RelationshipsManager.vue'
+import { useI18n } from '../i18n.js'
 
+const { t: $t } = useI18n()
 const props = defineProps({ type: String, id: String, types: Array })
 const route = useRoute()
 const router = useRouter()
@@ -88,14 +90,13 @@ const draftKey = computed(() =>
     ? `taichu-draft-${props.type}`
     : `taichu-draft-${props.type}-${props.id}`
 )
-const autoSaveStatus = ref('')   // '' | 'saving' | 'saved'
+const autoSaveStatus = ref('')
 const autoSaveTime = ref('')
 const draftRestored = ref(false)
 let saveTimer = null
 
 function persistDraft() {
   const data = JSON.parse(JSON.stringify(formData))
-  // Only save if there's actual content
   const hasContent = Object.values(data).some(v => v !== '' && v !== null && v !== undefined)
   if (!hasContent) return
   try {
@@ -111,7 +112,7 @@ function debouncedSave() {
   saveTimer = setTimeout(() => {
     persistDraft()
     autoSaveStatus.value = 'saved'
-    autoSaveTime.value = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+    autoSaveTime.value = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     setTimeout(() => { if (autoSaveStatus.value === 'saved') autoSaveStatus.value = '' }, 3000)
   }, 2000)
 }
@@ -128,7 +129,6 @@ function restoreDraft() {
     if (!raw) return false
     const saved = JSON.parse(raw)
     if (saved?.data && typeof saved.data === 'object') {
-      // Only restore fields that exist in current schema
       for (const key of Object.keys(saved.data)) {
         if (key in formData || fields.value.some(f => f.name === key)) {
           formData[key] = saved.data[key]
@@ -141,7 +141,6 @@ function restoreDraft() {
   return false
 }
 
-// Watch all formData changes for auto-save
 watch(() => ({ ...formData }), () => {
   if (!draftRestored.value && Object.keys(formData).length > 0) {
     draftRestored.value = true
@@ -151,7 +150,6 @@ watch(() => ({ ...formData }), () => {
   }
 }, { deep: true })
 
-// Warn on unsaved changes before leaving
 function beforeUnload(e) {
   const hasContent = Object.values(formData).some(v => v !== '' && v !== null && v !== undefined)
   if (hasContent && !loading.value) {
@@ -169,7 +167,6 @@ onMounted(async () => {
 
   let schemaLoaded = false
   try {
-    // Get content type schema from API (returns JSON Schema: { properties: { title: {...} } })
     const schema = await api.getContentTypeSchema(props.type)
     const schemaFields = schema?.properties || schema?.fields
     if (schemaFields) {
@@ -187,42 +184,37 @@ onMounted(async () => {
   }
 
   if (!schemaLoaded) {
-    // Infer fields from types prop as fallback
     const ct = (props.types || []).find(t => t.name === props.type)
     if (ct) {
       fields.value = ct.fields || Object.keys(ct).filter(k => !['name', 'label', 'description', 'schemaOrg'].includes(k))
     } else {
       fields.value = [
-        { name: 'title', label: '标题', type: 'string', required: true },
-        { name: 'slug', label: 'Slug', type: 'string', required: true },
-        { name: 'body', label: '正文', type: 'json', required: true }
+        { name: 'title', label: $t('contentEdit.fallback_title'), type: 'string', required: true },
+        { name: 'slug', label: $t('contentEdit.fallback_slug'), type: 'string', required: true },
+        { name: 'body', label: $t('contentEdit.fallback_body'), type: 'json', required: true }
       ]
     }
   }
 
-  // Get existing doc if editing
   if (!isNew.value) {
     try {
       const doc = await api.get(props.type, props.id)
       if (doc) {
         Object.assign(formData, doc.data)
-        // After loading server data, check for newer local draft
         restoreDraft()
       }
     } catch (e) {
-      error.value = 'Failed to load document'
+      error.value = $t('contentEdit.load_error')
     }
   } else {
-    // New doc: restore draft if exists
     if (restoreDraft()) {
       autoSaveStatus.value = 'saved'
-      autoSaveTime.value = '已恢复'
+      autoSaveTime.value = $t('contentEdit.draft_restored')
       setTimeout(() => { autoSaveStatus.value = '' }, 3000)
     }
   }
 })
 
-// Auto-generate slug from title (only for new documents)
 let slugAutoGenerated = false
 watch(() => formData.title, (title) => {
   if (!isNew.value || slugAutoGenerated || !title) return
@@ -250,7 +242,6 @@ async function save(status) {
   try {
     const data = { ...formData }
 
-    // Parse JSON fields
     for (const f of fields.value) {
       if (f.type === 'json' && typeof data[f.name] === 'string') {
         try { data[f.name] = JSON.parse(data[f.name]) } catch {}

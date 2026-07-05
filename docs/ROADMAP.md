@@ -137,7 +137,7 @@
 | MCP Server Version Consistency | P0 | ✅ Done |
 | Admin Badge Dark Mode CSS Variables | P0 | ✅ Done |
 | Test Coverage: sm-crypto ✅, scheduler ✅, webhook ✅, plugin-manager ✅, MCP ✅, WebSocket ✅ | P1 | ✅ Done |
-| Admin i18n Completion (10+ untranslated views) | P1 | ⬜ Todo |
+| Admin i18n Completion (10+ untranslated views) | P1 | ✅ Done |
 | SQLite JSON.parse Error Handling | P1 | ✅ Done |
 | CORS Origin Configuration (TAICHU_CORS_ORIGIN env) | P1 | ✅ Done |
 | Admin Icon System (emoji → SVG icons) | P1 | ⬜ Todo |

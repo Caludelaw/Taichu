@@ -2,36 +2,36 @@
   <div>
     <div class="header">
       <h2 class="page-title">{{ typeLabel }}</h2>
-      <button class="btn" @click="$router.push(`/content/${type}/new`)">+ 新建</button>
+      <button class="btn" @click="$router.push(`/content/${type}/new`)">{{ $t('contentList.new') }}</button>
     </div>
 
     <div class="search-bar">
-      <input v-model="searchQuery" @input="debounceSearch" placeholder="搜索标题..." class="input" />
+      <input v-model="searchQuery" @input="debounceSearch" :placeholder="$t('contentList.search_placeholder')" class="input" />
       <select v-model="statusFilter" @change="load" class="input select-sm">
-        <option value="">全部状态</option>
-        <option value="draft">草稿</option>
-        <option value="scheduled">定时</option>
-        <option value="published">已发布</option>
-        <option value="archived">已归档</option>
+        <option value="">{{ $t('contentList.all_status') }}</option>
+        <option value="draft">{{ $t('contentList.status_draft') }}</option>
+        <option value="scheduled">{{ $t('contentList.status_scheduled') }}</option>
+        <option value="published">{{ $t('contentList.status_published') }}</option>
+        <option value="archived">{{ $t('contentList.status_archived') }}</option>
       </select>
     </div>
 
     <div v-if="selected.length" class="batch-bar">
-      <span>已选 {{ selected.length }} 项</span>
-      <button @click="batchAction('publish')" class="btn-sm btn-batch">📤 批量发布</button>
-      <button @click="batchAction('archive')" class="btn-sm btn-batch">📦 批量归档</button>
-      <button @click="batchAction('delete')" class="btn-sm btn-batch-danger">🗑️ 批量删除</button>
-      <button @click="selected = []" class="btn-sm">取消</button>
+      <span>{{ $t('contentList.selected_count', { n: selected.length }) }}</span>
+      <button @click="batchAction('publish')" class="btn-sm btn-batch">{{ $t('contentList.batch_publish') }}</button>
+      <button @click="batchAction('archive')" class="btn-sm btn-batch">{{ $t('contentList.batch_archive') }}</button>
+      <button @click="batchAction('delete')" class="btn-sm btn-batch-danger">{{ $t('contentList.batch_delete') }}</button>
+      <button @click="selected = []" class="btn-sm">{{ $t('contentList.cancel') }}</button>
     </div>
 
     <table v-if="docs.length" class="table">
       <thead>
         <tr>
           <th style="width:40px"><input type="checkbox" @change="toggleAll" :checked="allSelected" /></th>
-          <th>标题</th>
-          <th>状态</th>
-          <th>更新时间</th>
-          <th>操作</th>
+          <th>{{ $t('contentList.col_title') }}</th>
+          <th>{{ $t('contentList.col_status') }}</th>
+          <th>{{ $t('contentList.col_updated') }}</th>
+          <th>{{ $t('contentList.col_actions') }}</th>
         </tr>
       </thead>
       <tbody>
@@ -39,25 +39,25 @@
           <td><input type="checkbox" :checked="selected.includes(doc.id)" @change="toggleSelect(doc.id)" /></td>
           <td>
             <a href="#" @click.prevent="$router.push(`/content/${type}/${doc.id}`)">
-              {{ doc.data.title || doc.data.name || '(无标题)' }}
+              {{ doc.data.title || doc.data.name || $t('contentList.untitled') }}
             </a>
           </td>
           <td><span :class="`badge badge-${doc.status}`">{{ statusLabel(doc.status) }}</span></td>
           <td class="date">{{ fmtDate(doc.updatedAt) }}</td>
           <td>
-            <button class="btn-sm" @click="$router.push(`/content/${type}/${doc.id}`)">编辑</button>
-            <button class="btn-sm btn-danger" @click="remove(doc.id)">删除</button>
+            <button class="btn-sm" @click="$router.push(`/content/${type}/${doc.id}`)">{{ $t('contentList.edit') }}</button>
+            <button class="btn-sm btn-danger" @click="remove(doc.id)">{{ $t('contentList.delete') }}</button>
           </td>
         </tr>
       </tbody>
     </table>
-    <p v-else-if="!loading" class="empty">暂无{{ typeLabel }}内容</p>
-    <p v-else class="empty">加载中...</p>
+    <p v-else-if="!loading" class="empty">{{ $t('contentList.no_items', { type: typeLabel }) }}</p>
+    <p v-else class="empty">{{ $t('contentList.loading') }}</p>
 
     <div v-if="totalPages > 1" class="pagination">
-      <button :disabled="page <= 1" @click="goPage(page - 1)" class="btn-page">‹ 上一页</button>
-      <span class="page-info">第 {{ page }} / {{ totalPages }} 页 (共 {{ total }} 条)</span>
-      <button :disabled="page >= totalPages" @click="goPage(page + 1)" class="btn-page">下一页 ›</button>
+      <button :disabled="page <= 1" @click="goPage(page - 1)" class="btn-page">{{ $t('contentList.prev_page') }}</button>
+      <span class="page-info">{{ $t('contentList.page_info', { page, totalPages, total }) }}</span>
+      <button :disabled="page >= totalPages" @click="goPage(page + 1)" class="btn-page">{{ $t('contentList.next_page') }}</button>
     </div>
   </div>
 </template>
@@ -66,7 +66,9 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { api } from '../api/index.js'
 import { fmtDate, statusLabel, notifyError } from '../utils/format.js'
+import { useI18n } from '../i18n.js'
 
+const { t: $t } = useI18n()
 const props = defineProps({ type: String, types: Array })
 const docs = ref([])
 const loading = ref(false)
@@ -114,16 +116,14 @@ function goPage(p) {
 }
 
 async function remove(id) {
-  if (!confirm('确认删除？')) return
+  if (!confirm($t('contentList.delete_confirm'))) return
   try {
     await api.delete(props.type, id)
     load()
   } catch (e) {
-    notifyError('删除', e)
+    notifyError($t('contentList.delete'), e)
   }
 }
-
-// fmtDate, statusLabel, notifyError — from ../utils/format.js
 
 function toggleSelect(id) {
   const i = selected.value.indexOf(id)
@@ -136,8 +136,12 @@ function toggleAll(e) {
 }
 
 async function batchAction(action) {
-  const label = { publish: '发布', archive: '归档', delete: '删除' }
-  if (!confirm(`确定批量${label[action]} ${selected.value.length} 条内容？`)) return
+  const actionLabels = {
+    publish: $t('contentList.action_publish'),
+    archive: $t('contentList.action_archive'),
+    delete: $t('contentList.action_delete')
+  }
+  if (!confirm($t('contentList.batch_confirm', { action: actionLabels[action], n: selected.value.length }))) return
   try {
     await api.request(`/content/${props.type}/batch`, {
       method: 'POST',
@@ -146,7 +150,7 @@ async function batchAction(action) {
     selected.value = []
     load()
   } catch (e) {
-    notifyError('批量操作', e)
+    notifyError($t('contentList.batch_error'), e)
   }
 }
 

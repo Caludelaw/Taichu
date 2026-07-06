@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h2 class="page-title">{{ $t('pipelines.title') }}</h2>
+    <h2 class="page-title"><Icon name="refresh" :size="18" /> {{ $t('pipelines.title') }}</h2>
     <p v-if="!templates.length" class="empty">{{ $t('pipelines.no_items') }}</p>
     <div class="grid" v-else>
       <div v-for="tpl in templates" :key="tpl.id" class="card">
@@ -16,6 +16,7 @@
 import { ref, onMounted } from 'vue'
 import { api } from '../api/index.js'
 import { useI18n } from '../i18n.js'
+import Icon from '../components/Icon.vue'
 
 const { t: $t } = useI18n()
 const templates = ref([])

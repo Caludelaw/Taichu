@@ -37,7 +37,7 @@
             <button @click="toggleUser(u)" class="btn-sm">
               {{ u.status === 'active' ? $t('users.disable') : $t('users.enable') }}
             </button>
-            <button @click="resetPassword(u)" class="btn-sm" :title="$t('users.reset_error')">{{ $t('users.reset_password') }}</button>
+            <button @click="resetPassword(u)" class="btn-sm" :title="$t('users.reset_error')"><Icon name="key" :size="14" /></button>
           </td>
         </tr>
       </tbody>
@@ -51,6 +51,7 @@ import { ref, onMounted } from 'vue'
 import { api } from '../api/index.js'
 import { fmtDate, notifyError } from '../utils/format.js'
 import { useI18n } from '../i18n.js'
+import Icon from '../components/Icon.vue'
 
 const { t: $t } = useI18n()
 const users = ref([])

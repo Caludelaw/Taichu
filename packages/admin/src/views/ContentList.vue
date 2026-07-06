@@ -2,7 +2,7 @@
   <div>
     <div class="header">
       <h2 class="page-title">{{ typeLabel }}</h2>
-      <button class="btn" @click="$router.push(`/content/${type}/new`)">{{ $t('contentList.new') }}</button>
+      <button class="btn" @click="$router.push(`/content/${type}/new`)"><Icon name="plus" :size="14" /> {{ $t('contentList.new') }}</button>
     </div>
 
     <div class="search-bar">
@@ -18,9 +18,9 @@
 
     <div v-if="selected.length" class="batch-bar">
       <span>{{ $t('contentList.selected_count', { n: selected.length }) }}</span>
-      <button @click="batchAction('publish')" class="btn-sm btn-batch">{{ $t('contentList.batch_publish') }}</button>
-      <button @click="batchAction('archive')" class="btn-sm btn-batch">{{ $t('contentList.batch_archive') }}</button>
-      <button @click="batchAction('delete')" class="btn-sm btn-batch-danger">{{ $t('contentList.batch_delete') }}</button>
+      <button @click="batchAction('publish')" class="btn-sm btn-batch"><Icon name="upload-cloud" :size="12" /> {{ $t('contentList.batch_publish') }}</button>
+      <button @click="batchAction('archive')" class="btn-sm btn-batch"><Icon name="package" :size="12" /> {{ $t('contentList.batch_archive') }}</button>
+      <button @click="batchAction('delete')" class="btn-sm btn-batch-danger"><Icon name="trash" :size="12" /> {{ $t('contentList.batch_delete') }}</button>
       <button @click="selected = []" class="btn-sm">{{ $t('contentList.cancel') }}</button>
     </div>
 
@@ -67,6 +67,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { api } from '../api/index.js'
 import { fmtDate, statusLabel, notifyError } from '../utils/format.js'
 import { useI18n } from '../i18n.js'
+import Icon from '../components/Icon.vue'
 
 const { t: $t } = useI18n()
 const props = defineProps({ type: String, types: Array })

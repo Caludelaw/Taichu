@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="header">
-      <h2 class="page-title">{{ $t('media.title') }}</h2>
+      <h2 class="page-title"><Icon name="image" :size="18" /> {{ $t('media.title') }}</h2>
       <label class="upload-btn">
         {{ $t('media.upload') }}
         <input type="file" multiple @change="upload" hidden />
@@ -14,7 +14,7 @@
       <div v-for="f in files" :key="f.id" class="media-card">
         <div class="media-preview">
           <img v-if="f.mimetype?.startsWith('image/')" :src="f.url" :alt="f.originalName" loading="lazy" />
-          <span v-else class="file-icon">{{ fileIcon(f) }}</span>
+          <Icon v-else class="file-icon" :name="fileIcon(f)" :size="40" />
         </div>
         <div class="media-info">
           <span class="media-name">{{ f.originalName || f.filename }}</span>
@@ -34,6 +34,7 @@
 import { ref, onMounted } from 'vue'
 import { api } from '../api/index.js'
 import { useI18n } from '../i18n.js'
+import Icon from '../components/Icon.vue'
 
 const { t: $t } = useI18n()
 const files = ref([])
@@ -83,9 +84,9 @@ async function copyUrl(f) {
 }
 
 function fileIcon(f) {
-  if (f.mimetype?.startsWith('video/')) return $t('media.file_icon_video')
-  if (f.mimetype === 'application/pdf') return $t('media.file_icon_pdf')
-  return $t('media.file_icon_default')
+  if (f.mimetype?.startsWith('video/')) return 'video-camera'
+  if (f.mimetype === 'application/pdf') return 'file-pdf'
+  return 'file'
 }
 
 function formatSize(bytes) {

@@ -2,7 +2,7 @@
   <div>
     <div class="header">
       <h2 class="page-title">{{ $t('plugins.title') }}</h2>
-      <button class="btn" @click="load">{{ $t('plugins.refresh') }}</button>
+      <button class="btn" @click="load"><Icon name="refresh" :size="14" /> {{ $t('plugins.refresh') }}</button>
     </div>
 
     <div class="grid" v-if="plugins.length">
@@ -13,10 +13,10 @@
           <span>v{{ p.version || '0.1.0' }}</span>
           <span>{{ p.author || '-' }}</span>
         </div>
-        <button v-if="p.installed" class="btn-sm installed">{{ $t('plugins.installed') }}</button>
+        <button v-if="p.installed" class="btn-sm installed"><Icon name="check-circle" :size="12" /> {{ $t('plugins.installed') }}</button>
         <div v-else class="card-actions">
           <button class="btn-sm" @click="install(p)">{{ $t('plugins.install') }}</button>
-          <button v-if="p.installed" class="btn-sm btn-danger" @click="uninstall(p)">{{ $t('plugins.uninstall') }}</button>
+          <button v-if="p.installed" class="btn-sm btn-danger" @click="uninstall(p)"><Icon name="trash" :size="14" /> {{ $t('plugins.uninstall') }}</button>
         </div>
       </div>
     </div>
@@ -29,6 +29,7 @@ import { ref, onMounted } from 'vue'
 import { api } from '../api/index.js'
 import { notifyError } from '../utils/format.js'
 import { useI18n } from '../i18n.js'
+import Icon from '../components/Icon.vue'
 
 const { t: $t } = useI18n()
 const plugins = ref([])

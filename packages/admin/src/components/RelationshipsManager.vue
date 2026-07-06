@@ -23,7 +23,7 @@
         <div v-for="r in outgoing" :key="r.targetId + r.type" class="rel-item">
           <span class="rel-type" :class="'type-' + r.type">{{ typeLabel(r.type) }}</span>
           <span class="rel-title">{{ r.targetTitle || r.targetId }}</span>
-          <button @click="removeRel(r.targetId, r.type)" class="btn-del" :title="$t('relationships.remove')">{{ $t('relationships.remove') }}</button>
+          <button @click="removeRel(r.targetId, r.type)" class="btn-del" :title="$t('relationships.remove')"><Icon name="close" :size="12" /> {{ $t('relationships.remove') }}</button>
         </div>
       </div>
 
@@ -59,6 +59,7 @@
 import { ref, reactive, watch, onMounted } from 'vue'
 import { api } from '../api/index.js'
 import { useI18n } from '../i18n.js'
+import Icon from './Icon.vue'
 
 const { t: $t } = useI18n()
 const props = defineProps({ docId: String, docType: String })

@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="header">
-      <h2 class="page-title">{{ $t('tags.title') }}</h2>
+      <h2 class="page-title"><Icon name="tag" :size="18" /> {{ $t('tags.title') }}</h2>
       <button class="btn" @click="showEdit(null)">{{ $t('tags.new') }}</button>
     </div>
 
@@ -46,6 +46,7 @@ import { ref, onMounted } from 'vue'
 import { api } from '../api/index.js'
 import { notifyError } from '../utils/format.js'
 import { useI18n } from '../i18n.js'
+import Icon from '../components/Icon.vue'
 
 const { t: $t } = useI18n()
 const tags = ref([])

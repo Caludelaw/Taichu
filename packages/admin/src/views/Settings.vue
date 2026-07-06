@@ -60,7 +60,7 @@
 
       <div class="actions">
         <button @click="save" class="btn-primary" :disabled="saving">{{ saving ? $t('settings.saving') : $t('settings.save') }}</button>
-        <span v-if="saved" class="saved">{{ $t('settings.saved') }}</span>
+        <span v-if="saved" class="saved"><Icon name="check-circle" :size="14" /> {{ $t('settings.saved') }}</span>
       </div>
     </div>
   </div>
@@ -70,6 +70,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { api } from '../api/index.js'
 import { useI18n } from '../i18n.js'
+import Icon from '../components/Icon.vue'
 
 const { t: $t } = useI18n()
 const loading = ref(true)

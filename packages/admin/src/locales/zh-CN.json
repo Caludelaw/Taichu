@@ -1,39 +1,40 @@
 {
-  "app": { "title": "Taichu CMS", "logo": "⚡ Taichu" },
-
+  "app": {
+    "title": "Taichu CMS",
+    "logo": "Taichu"
+  },
   "nav": {
     "section_content": "内容",
-    "media": "🖼️ 媒体库",
-    "categories": "📂 栏目管理",
-    "tags": "🏷️ 标签管理",
-    "comments": "💬 评论管理",
-    "navigation": "🧭 导航菜单",
+    "media": "媒体库",
+    "categories": "栏目管理",
+    "tags": "标签管理",
+    "comments": "评论管理",
+    "navigation": "导航菜单",
     "section_manage": "管理",
-    "users": "👥 用户管理",
-    "apikeys": "🔑 API Keys",
-    "webhooks": "🔗 Webhooks",
-    "settings": "⚙️ 站点配置",
-    "theme": "🎨 外观主题",
-    "theme_manager": "📦 主题管理",
+    "users": "用户管理",
+    "apikeys": "API Keys",
+    "webhooks": "Webhooks",
+    "settings": "站点配置",
+    "theme": "外观主题",
+    "theme_manager": "主题管理",
     "section_security": "安全",
-    "audit": "📋 审计日志",
-    "workflow": "✅ 审核队列",
+    "audit": "审计日志",
+    "workflow": "审核队列",
     "section_dev": "开发",
-    "plugins": "🧩 插件市场",
-    "agents": "🤖 Agent 市场",
-    "pipelines": "🔄 管道模板",
-    "api_docs": "📖 API 文档",
-    "graphiql": "🔬 GraphiQL",
-    "ws_test": "📡 WS 测试",
+    "plugins": "插件市场",
+    "agents": "Agent 市场",
+    "pipelines": "管道模板",
+    "api_docs": "API 文档",
+    "graphiql": "GraphiQL",
+    "ws_test": "WS 测试",
     "logout": "退出",
     "toggle_light": "切换亮色模式",
     "toggle_dark": "切换暗色模式",
     "close_menu": "关闭菜单",
     "open_menu": "打开菜单"
   },
-
   "login": {
-    "title": "⚡ Taichu Admin",
+    "title": "Taichu Admin",
     "subtitle": "AI Agent-Native CMS",
     "tab_login": "登录",
     "tab_register": "注册",
@@ -46,7 +47,6 @@
     "error_invalid": "用户名或密码错误",
     "error_taken": "用户名已被占用"
   },
-
   "dashboard": {
     "title": "仪表盘",
     "overview": "内容概览",
@@ -61,9 +61,8 @@
     "store": "存储",
     "ws_connections": "WS 连接"
   },
-
   "contentList": {
-    "new": "+ 新建",
+    "new": "新建",
     "search_placeholder": "搜索标题...",
     "all_status": "全部状态",
     "status_draft": "草稿",
@@ -71,9 +70,9 @@
     "status_published": "已发布",
     "status_archived": "已归档",
     "selected_count": "已选 {n} 项",
-    "batch_publish": "📤 批量发布",
-    "batch_archive": "📦 批量归档",
-    "batch_delete": "🗑️ 批量删除",
+    "batch_publish": "批量发布",
+    "batch_archive": "批量归档",
+    "batch_delete": "批量删除",
     "cancel": "取消",
     "col_title": "标题",
     "col_status": "状态",
@@ -94,7 +93,6 @@
     "action_delete": "删除",
     "batch_error": "批量操作"
   },
-
   "contentEdit": {
     "new": "新建",
     "edit": "编辑",
@@ -111,9 +109,8 @@
     "fallback_slug": "Slug",
     "fallback_body": "正文"
   },
-
   "media": {
-    "title": "🖼️ 媒体库",
+    "title": "媒体库",
     "upload": "上传文件",
     "uploading": "上传中...",
     "copy_url": "复制链接",
@@ -121,14 +118,13 @@
     "no_items": "暂无媒体文件",
     "size_label": "大小",
     "url_copied": "链接已复制",
-    "file_icon_default": "📄",
-    "file_icon_video": "🎬",
-    "file_icon_pdf": "📕"
+    "file_icon_default": "文件",
+    "file_icon_video": "视频",
+    "file_icon_pdf": "PDF"
   },
-
   "categories": {
-    "title": "📂 栏目管理",
-    "new": "+ 新建栏目",
+    "title": "栏目管理",
+    "new": "新建栏目",
     "name": "名称",
     "description": "描述",
     "parent": "父栏目",
@@ -139,10 +135,9 @@
     "delete_confirm": "确认删除此栏目？",
     "save_error": "保存栏目"
   },
-
   "tags": {
-    "title": "🏷️ 标签管理",
-    "new": "+ 新建标签",
+    "title": "标签管理",
+    "new": "新建标签",
     "name": "标签名称",
     "slug": "Slug",
     "content_count": "内容数",
@@ -152,9 +147,8 @@
     "delete_confirm": "确认删除此标签？",
     "save_error": "保存标签"
   },
-
   "comments": {
-    "title": "💬 评论管理",
+    "title": "评论管理",
     "author": "作者",
     "content": "内容",
     "post": "文章",
@@ -162,9 +156,9 @@
     "time": "时间",
     "actions": "操作",
     "anonymous": "匿名",
-    "view": "🔗 查看",
-    "approve": "✓ 通过",
-    "spam": "🚫 垃圾",
+    "view": "查看",
+    "approve": "通过",
+    "spam": "垃圾",
     "status_pending": "待审核",
     "status_approved": "已通过",
     "status_spam": "垃圾",
@@ -172,10 +166,9 @@
     "approve_error": "审核评论",
     "spam_error": "标记垃圾"
   },
-
   "navigation_menu": {
-    "title": "🧭 导航菜单",
-    "new": "+ 添加菜单项",
+    "title": "导航菜单",
+    "new": "添加菜单项",
     "label": "标题",
     "url": "链接",
     "order": "排序",
@@ -188,9 +181,8 @@
     "delete_confirm": "确认删除此菜单项？",
     "save_error": "保存菜单"
   },
-
   "users": {
-    "title": "👥 用户管理",
+    "title": "用户管理",
     "count": "共 {n} 位用户",
     "col_username": "用户名",
     "col_email": "邮箱",
@@ -205,7 +197,7 @@
     "status_disabled": "禁用",
     "enable": "启用",
     "disable": "禁用",
-    "reset_password": "🔑",
+    "reset_password": "重置密码",
     "no_users": "暂无用户",
     "no_email": "该用户没有邮箱",
     "reset_confirm": "确定重置 {name} 的密码？",
@@ -214,9 +206,8 @@
     "role_error": "更新角色",
     "reset_error": "重置密码"
   },
-
   "apikeys": {
-    "title": "🔑 API Keys",
+    "title": "API Keys",
     "generate": "生成新 Key",
     "label": "标签",
     "scopes": "权限范围",
@@ -224,23 +215,22 @@
     "created": "创建时间",
     "revoke": "撤销",
     "revoke_confirm": "撤销后该 Key 立即失效，确认？",
-    "copy_warning": "⚠️ 复制此 Key，关闭后不可查看",
+    "copy_warning": "复制此 Key，关闭后不可查看",
     "no_keys": "暂无 API Key",
     "scope_all": "全部权限",
     "scope_read": "只读",
     "scope_hint": "默认：只读所有内容。选中 \"*:*\" 为管理员权限。",
     "revoke_error": "撤销"
   },
-
   "webhooks": {
-    "title": "🔗 Webhooks",
-    "new": "+ 新建 Webhook",
+    "title": "Webhooks",
+    "new": "新建 Webhook",
     "url": "URL",
     "events": "事件",
     "status": "状态",
     "actions": "操作",
-    "active": "✅ 启用",
-    "inactive": "❌ 停用",
+    "active": "启用",
+    "inactive": "停用",
     "delete": "删除",
     "no_items": "暂无 Webhook",
     "delete_confirm": "确认删除此 Webhook？",
@@ -248,9 +238,8 @@
     "delivery_log": "投递日志",
     "stats": "统计"
   },
-
   "settings": {
-    "title": "⚙️ 站点配置",
+    "title": "站点配置",
     "loading": "加载中...",
     "site_name": "站点名称",
     "compliance": "合规配置",
@@ -269,32 +258,30 @@
     "timezone": "时区",
     "save": "保存配置",
     "saving": "保存中...",
-    "saved": "✅ 已保存",
+    "saved": "已保存",
     "save_error": "保存失败"
   },
-
   "theme": {
-    "title": "🎨 外观主题",
+    "title": "外观主题",
     "brand_colors": "品牌色彩",
     "primary_color": "主色调",
     "bg_color": "背景色",
-    "typography": "🔤 排版",
+    "typography": "排版",
     "font_family": "字体",
-    "layout": "📐 布局",
+    "layout": "布局",
     "container_width": "容器宽度",
-    "custom_css": "📝 自定义 CSS",
-    "saved": "✅ 已保存",
-    "tip": "💡 提示：修改后立即生效",
+    "custom_css": "自定义 CSS",
+    "saved": "已保存",
+    "tip": "提示：修改后立即生效",
     "save": "保存主题",
     "save_error": "保存主题"
   },
-
   "themeManager": {
-    "title": "📦 主题管理",
+    "title": "主题管理",
     "active_theme": "当前主题",
     "built_in": "内置主题",
-    "upload": "📤 上传自定义主题",
-    "how_to": "💡 如何创建自定义主题？",
+    "upload": "上传自定义主题",
+    "how_to": "如何创建自定义主题？",
     "activate": "启用",
     "delete": "删除",
     "no_themes": "暂无主题",
@@ -304,9 +291,8 @@
     "activate_success": "主题已启用",
     "error": "主题操作出错"
   },
-
   "audit": {
-    "title": "📋 审计日志",
+    "title": "审计日志",
     "all_actions": "全部操作",
     "action_create": "创建",
     "action_update": "更新",
@@ -319,82 +305,75 @@
     "col_time": "时间",
     "col_action": "操作",
     "col_actor": "操作者",
-    "col_actor_agent": "🤖 Agent",
-    "col_actor_user": "👤 用户",
+    "col_actor_agent": "Agent",
+    "col_actor_user": "用户",
     "col_target": "目标",
     "no_items": "暂无审计日志"
   },
-
   "workflow": {
-    "title": "✅ 审核队列",
-    "approve": "✓ 通过",
-    "reject": "✗ 驳回",
+    "title": "审核队列",
+    "approve": "通过",
+    "reject": "驳回",
     "no_items": "暂无待审核内容",
     "approve_error": "审核通过",
     "reject_error": "驳回"
   },
-
   "plugins": {
-    "title": "🧩 插件市场",
-    "refresh": "🔄 刷新",
-    "installed": "✅ 已安装",
+    "title": "插件市场",
+    "refresh": "刷新",
+    "installed": "已安装",
     "install": "安装",
-    "uninstall": "🗑️ 卸载",
+    "uninstall": "卸载",
     "no_items": "暂无插件",
     "version": "版本",
     "author": "作者",
     "uninstall_confirm": "确认卸载此插件？",
     "error": "插件操作出错"
   },
-
   "agents": {
-    "title": "🤖 Agent 市场",
+    "title": "Agent 市场",
     "search": "搜索 Agent",
     "all_tags": "全部标签",
     "all_tools": "全部工具",
     "tools": "工具",
     "endpoints": "端点",
-    "details": "📋 详情",
+    "details": "详情",
     "last_online": "最后在线",
-    "status_online": "🟢 在线",
+    "status_online": "在线",
     "status_offline": "离线",
     "no_items": "暂无 Agent"
   },
-
   "pipelines": {
-    "title": "🔄 管道模板",
+    "title": "管道模板",
     "no_items": "暂无管道模板"
   },
-
   "revisions": {
-    "title": "📜 版本历史",
+    "title": "版本历史",
     "restore": "恢复",
     "col_version": "版本",
     "col_time": "时间",
     "col_author": "作者",
-    "col_author_agent": "🤖 Agent",
-    "col_author_user": "👤 用户",
+    "col_author_agent": "Agent",
+    "col_author_user": "用户",
     "no_items": "暂无版本记录",
     "restore_confirm": "确认恢复到版本 {version}？",
     "restore_success": "已恢复到版本 {version}",
     "restore_error": "恢复版本"
   },
-
   "relationships": {
-    "title": "🔗 内容关系",
+    "title": "内容关系",
     "target_id": "目标文档 ID",
     "relation_type": "关系类型",
     "type_related": "关联",
     "type_parent": "父级",
     "type_reference": "引用",
     "add": "添加关系",
-    "remove": "✕ 移除",
+    "remove": "移除",
     "outbound": "出站关系",
     "inbound": "入站关系",
     "graph": "关系图谱",
     "no_items": "暂无内容关系"
   },
-
   "richEditor": {
     "bold": "粗体",
     "italic": "斜体",
@@ -402,20 +381,19 @@
     "code": "行内代码",
     "ul": "无序列表",
     "ol": "有序列表",
-    "blockquote": "❝ 引用",
+    "blockquote": "引用",
     "code_block": "代码块",
-    "media": "🖼️ 媒体库",
-    "image_url": "🔗 插入图片 URL",
-    "media_title": "🖼️ 媒体库",
-    "close": "✕ 关闭",
+    "media": "媒体库",
+    "image_url": "插入图片 URL",
+    "media_title": "媒体库",
+    "close": "关闭",
     "cancel": "取消",
     "insert": "插入",
     "url_placeholder": "输入图片 URL...",
     "empty": "暂无媒体文件"
   },
-
   "apiDocs": {
-    "title": "📖 API 文档",
+    "title": "API 文档",
     "rest_api": "REST API",
     "graphql": "GraphQL API",
     "authentication": "认证",
@@ -446,7 +424,6 @@
     "error_409": "资源冲突",
     "error_500": "服务器内部错误"
   },
-
   "common": {
     "save": "保存",
     "cancel": "取消",

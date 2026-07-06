@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h2 class="page-title">{{ $t('dashboard.title') }}</h2>
+    <h2 class="page-title"><Icon name="clipboard" :size="20" /> {{ $t('dashboard.title') }}</h2>
 
     <div class="cards">
       <div class="card" v-for="s in stats" :key="s.label">
@@ -65,6 +65,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { api } from '../api/index.js'
 import { useI18n } from '../i18n.js'
 import { fmtDate, statusLabel } from '../utils/format.js'
+import Icon from '../components/Icon.vue'
 
 const { t: $t } = useI18n()
 const stats = ref([])

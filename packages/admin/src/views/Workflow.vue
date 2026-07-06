@@ -9,8 +9,8 @@
           <td>{{ item.data?.title || item.id }}</td>
           <td>{{ item.data?.author || '-' }}</td>
           <td>
-            <button class="btn-sm" style="color:#065F46" @click="action(item.id, 'approve')">{{ $t('workflow.approve') }}</button>
-            <button class="btn-sm btn-danger" @click="action(item.id, 'reject')">{{ $t('workflow.reject') }}</button>
+            <button class="btn-sm" style="color:#065F46" @click="action(item.id, 'approve')"><Icon name="check-small" :size="12" /> {{ $t('workflow.approve') }}</button>
+            <button class="btn-sm btn-danger" @click="action(item.id, 'reject')"><Icon name="x-small" :size="12" /> {{ $t('workflow.reject') }}</button>
           </td>
         </tr>
       </tbody>
@@ -24,6 +24,7 @@ import { ref, onMounted } from 'vue'
 import { api } from '../api/index.js'
 import { notifyError } from '../utils/format.js'
 import { useI18n } from '../i18n.js'
+import Icon from '../components/Icon.vue'
 
 const { t: $t } = useI18n()
 const items = ref([])

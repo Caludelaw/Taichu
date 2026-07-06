@@ -7,7 +7,8 @@
         <div class="rev-version">v{{ r.version || (revisions.length - i) }}</div>
         <div class="rev-meta">
           <span class="rev-time">{{ fmtDate(r.createdAt) }}</span>
-          <span>{{ r.authorType === 'agent' ? $t('revisions.col_author_agent') : $t('revisions.col_author_user') }} {{ r.authorId?.substring(0, 8) }}</span>
+          <span v-if="r.authorType === 'agent'"><Icon name="bot" :size="12" /> {{ $t('revisions.col_author_agent') }} {{ r.authorId?.substring(0, 8) }}</span>
+          <span v-else><Icon name="user" :size="12" /> {{ $t('revisions.col_author_user') }} {{ r.authorId?.substring(0, 8) }}</span>
         </div>
         <div class="rev-summary">{{ r.summary || '-' }}</div>
         <button class="btn-sm" @click="restore(r)">{{ $t('revisions.restore') }}</button>
@@ -23,6 +24,7 @@ import { useRoute } from 'vue-router'
 import { api } from '../api/index.js'
 import { notifyError } from '../utils/format.js'
 import { useI18n } from '../i18n.js'
+import Icon from '../components/Icon.vue'
 
 const { t: $t } = useI18n()
 const route = useRoute()

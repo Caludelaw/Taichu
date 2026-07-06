@@ -20,7 +20,7 @@
         <tr v-for="w in webhooks" :key="w.id">
           <td><code>{{ w.url }}</code></td>
           <td>{{ (w.events || []).join(', ') }}</td>
-          <td>{{ w.active ? $t('webhooks.active') : $t('webhooks.inactive') }}</td>
+          <td><span v-if="w.active"><Icon name="check-circle" :size="12" /> {{ $t('webhooks.active') }}</span><span v-else><Icon name="x-circle" :size="12" /> {{ $t('webhooks.inactive') }}</span></td>
           <td>
             <button class="btn-sm btn-danger" @click="remove(w.id)">{{ $t('webhooks.delete') }}</button>
           </td>
@@ -36,6 +36,7 @@ import { ref, onMounted } from 'vue'
 import { api } from '../api/index.js'
 import { notifyError } from '../utils/format.js'
 import { useI18n } from '../i18n.js'
+import Icon from '../components/Icon.vue'
 
 const { t: $t } = useI18n()
 const webhooks = ref([])

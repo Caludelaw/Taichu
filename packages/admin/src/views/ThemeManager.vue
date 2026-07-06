@@ -3,7 +3,7 @@
     <div class="header">
       <h2 class="page-title">{{ $t('themeManager.title') }}</h2>
       <label class="upload-btn">
-        {{ $t('themeManager.upload') }}
+        <Icon name="upload-cloud" :size="14" /> {{ $t('themeManager.upload') }}
         <input type="file" accept=".zip" @change="uploadTheme" hidden />
       </label>
     </div>
@@ -39,6 +39,7 @@ import { ref, onMounted } from 'vue'
 import { api } from '../api/index.js'
 import { notifyError } from '../utils/format.js'
 import { useI18n } from '../i18n.js'
+import Icon from '../components/Icon.vue'
 
 const { t: $t } = useI18n()
 const themes = ref([])

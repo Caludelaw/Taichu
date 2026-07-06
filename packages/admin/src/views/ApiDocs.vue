@@ -15,8 +15,8 @@
         <div class="ep-header">
           <span class="ep-method" :class="ep.method">{{ ep.method }}</span>
           <code class="ep-path">{{ ep.path }}</code>
-          <span v-if="ep.auth" class="ep-auth">🔒 {{ ep.auth }}</span>
-          <span v-else class="ep-auth public">🌐 Public</span>
+          <span v-if="ep.auth" class="ep-auth"><Icon name="lock" :size="12" /> {{ ep.auth }}</span>
+          <span v-else class="ep-auth public"><Icon name="globe" :size="12" /> Public</span>
         </div>
         <p class="ep-desc">{{ ep.desc }}</p>
         <details v-if="ep.curl" class="ep-curl">
@@ -34,6 +34,7 @@
 
 <script setup>
 import { useI18n } from '../i18n.js'
+import Icon from '../components/Icon.vue'
 const { t: $t } = useI18n()
 
 const sections = [

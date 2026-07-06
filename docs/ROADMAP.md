@@ -140,7 +140,7 @@
 | Admin i18n Completion (10+ untranslated views) | P1 | ✅ Done |
 | SQLite JSON.parse Error Handling | P1 | ✅ Done |
 | CORS Origin Configuration (TAICHU_CORS_ORIGIN env) | P1 | ✅ Done |
-| Admin Icon System (emoji → SVG icons) | P1 | ⬜ Todo |
+| Admin Icon System (emoji → SVG icons) | P1 | ✅ Done |
 | Content Preview in Admin | P2 | ⬜ Todo |
 | Revisions Diff Viewer UI | P2 | ⬜ Todo |
 | Drag-and-Drop Content Ordering | P2 | ⬜ Todo |

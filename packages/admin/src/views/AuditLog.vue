@@ -22,7 +22,7 @@
           <tr v-for="e in entries" :key="e.id">
             <td class="time">{{ fmtTime(e.createdAt) }}</td>
             <td><span :class="'tag tag-' + e.action">{{ e.action }}</span></td>
-            <td>{{ e.actorType === 'agent' ? $t('audit.col_actor_agent') : $t('audit.col_actor_user') }} {{ e.actorId?.substring(0, 12) }}</td>
+            <td><span v-if="e.actorType === 'agent'"><Icon name="bot" :size="12" /> {{ $t('audit.col_actor_agent') }} {{ e.actorId?.substring(0, 12) }}</span><span v-else><Icon name="user" :size="12" /> {{ $t('audit.col_actor_user') }} {{ e.actorId?.substring(0, 12) }}</span></td>
             <td>{{ e.resourceType }}/{{ e.resourceId?.substring(0, 8) }}</td>
             <td>{{ e.detail?.title || '-' }}</td>
           </tr>
@@ -37,6 +37,7 @@
 import { ref, onMounted } from 'vue'
 import { api } from '../api/index.js'
 import { useI18n } from '../i18n.js'
+import Icon from '../components/Icon.vue'
 
 const { t: $t } = useI18n()
 const entries = ref([])

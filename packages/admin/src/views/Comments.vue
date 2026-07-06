@@ -32,14 +32,14 @@
           <td><div class="comment-body">{{ c.data?.body }}</div></td>
           <td>
             <a v-if="c.data?.postId" :href="`/post/${c.data.postId}`" target="_blank" class="post-link">
-              {{ $t('comments.view') }}
+              <Icon name="link" :size="12" /> {{ $t('comments.view') }}
             </a>
           </td>
           <td><span :class="`badge badge-${statusBadge(c.data?.status)}`">{{ statusLabel(c.data?.status) }}</span></td>
           <td class="date-col">{{ fmtDate(c.createdAt, 'date') }}</td>
           <td>
-            <button v-if="c.data?.status === 'pending'" @click="approve(c.id)" class="btn-sm" style="color:#065F46">{{ $t('comments.approve') }}</button>
-            <button v-if="c.data?.status !== 'spam'" @click="markSpam(c.id)" class="btn-sm">{{ $t('comments.spam') }}</button>
+            <button v-if="c.data?.status === 'pending'" @click="approve(c.id)" class="btn-sm" style="color:#065F46"><Icon name="check-small" :size="12" /> {{ $t('comments.approve') }}</button>
+            <button v-if="c.data?.status !== 'spam'" @click="markSpam(c.id)" class="btn-sm"><Icon name="ban" :size="12" /> {{ $t('comments.spam') }}</button>
             <button @click="remove(c.id)" class="btn-sm btn-danger">{{ $t('common.status_archived') }}</button>
           </td>
         </tr>
@@ -54,6 +54,7 @@ import { ref, onMounted } from 'vue'
 import { api } from '../api/index.js'
 import { fmtDate, notifyError } from '../utils/format.js'
 import { useI18n } from '../i18n.js'
+import Icon from '../components/Icon.vue'
 
 const { t: $t, statusLabel } = useI18n()
 const comments = ref([])

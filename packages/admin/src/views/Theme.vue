@@ -41,7 +41,7 @@
 
       <div class="actions">
         <button @click="save" class="btn-primary">{{ $t('theme.save') }}</button>
-        <span v-if="saved" class="saved">{{ $t('theme.saved') }}</span>
+        <span v-if="saved" class="saved"><Icon name="check-circle" :size="14" /> {{ $t('theme.saved') }}</span>
       </div>
       <p class="tip">{{ $t('theme.tip') }}</p>
     </div>
@@ -52,6 +52,7 @@
 import { ref, onMounted } from 'vue'
 import { api } from '../api/index.js'
 import { useI18n } from '../i18n.js'
+import Icon from '../components/Icon.vue'
 
 const { t: $t } = useI18n()
 const config = ref({

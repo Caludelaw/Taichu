@@ -1,39 +1,40 @@
 {
-  "app": { "title": "Taichu CMS", "logo": "⚡ Taichu" },
-
+  "app": {
+    "title": "Taichu CMS",
+    "logo": "Taichu"
+  },
   "nav": {
     "section_content": "コンテンツ",
-    "media": "🖼️ メディアライブラリ",
-    "categories": "📂 カテゴリ",
-    "tags": "🏷️ タグ",
-    "comments": "💬 コメント",
-    "navigation": "🧭 ナビゲーション",
+    "media": "メディアライブラリ",
+    "categories": "カテゴリ",
+    "tags": "タグ",
+    "comments": "コメント",
+    "navigation": "ナビゲーション",
     "section_manage": "管理",
-    "users": "👥 ユーザー",
-    "apikeys": "🔑 API キー",
-    "webhooks": "🔗 Webhook",
-    "settings": "⚙️ サイト設定",
-    "theme": "🎨 テーマ",
-    "theme_manager": "📦 テーマ管理",
+    "users": "ユーザー",
+    "apikeys": "API キー",
+    "webhooks": "Webhook",
+    "settings": "サイト設定",
+    "theme": "テーマ",
+    "theme_manager": "テーマ管理",
     "section_security": "セキュリティ",
-    "audit": "📋 監査ログ",
-    "workflow": "✅ レビューキュー",
+    "audit": "監査ログ",
+    "workflow": "レビューキュー",
     "section_dev": "開発",
-    "plugins": "🧩 プラグイン",
-    "agents": "🤖 エージェント",
-    "pipelines": "🔄 パイプライン",
-    "api_docs": "📖 API ドキュメント",
-    "graphiql": "🔬 GraphiQL",
-    "ws_test": "📡 WS テスト",
+    "plugins": "プラグイン",
+    "agents": "エージェント",
+    "pipelines": "パイプライン",
+    "api_docs": "API ドキュメント",
+    "graphiql": "GraphiQL",
+    "ws_test": "WS テスト",
     "logout": "ログアウト",
     "toggle_light": "ライトモードに切替",
     "toggle_dark": "ダークモードに切替",
     "close_menu": "メニューを閉じる",
     "open_menu": "メニューを開く"
   },
-
   "login": {
-    "title": "⚡ Taichu Admin",
+    "title": "Taichu Admin",
     "subtitle": "AI Agent-Native CMS",
     "tab_login": "ログイン",
     "tab_register": "登録",
@@ -46,7 +47,6 @@
     "error_invalid": "ユーザー名またはパスワードが無効です",
     "error_taken": "このユーザー名は既に使用されています"
   },
-
   "dashboard": {
     "title": "ダッシュボード",
     "overview": "コンテンツ概要",
@@ -61,9 +61,8 @@
     "store": "ストア",
     "ws_connections": "WS 接続"
   },
-
   "contentList": {
-    "new": "+ 新規作成",
+    "new": "新規作成",
     "search_placeholder": "タイトル検索...",
     "all_status": "すべての状態",
     "status_draft": "下書き",
@@ -71,9 +70,9 @@
     "status_published": "公開済み",
     "status_archived": "アーカイブ",
     "selected_count": "{n} 件選択中",
-    "batch_publish": "📤 一括公開",
-    "batch_archive": "📦 一括アーカイブ",
-    "batch_delete": "🗑️ 一括削除",
+    "batch_publish": "一括公開",
+    "batch_archive": "一括アーカイブ",
+    "batch_delete": "一括削除",
     "cancel": "キャンセル",
     "col_title": "タイトル",
     "col_status": "状態",
@@ -94,7 +93,6 @@
     "action_delete": "削除",
     "batch_error": "一括操作"
   },
-
   "contentEdit": {
     "new": "新規作成",
     "edit": "編集",
@@ -111,9 +109,8 @@
     "fallback_slug": "スラッグ",
     "fallback_body": "本文"
   },
-
   "media": {
-    "title": "🖼️ メディアライブラリ",
+    "title": "メディアライブラリ",
     "upload": "ファイルをアップロード",
     "uploading": "アップロード中...",
     "copy_url": "URL をコピー",
@@ -121,14 +118,13 @@
     "no_items": "メディアファイルがありません",
     "size_label": "サイズ",
     "url_copied": "URL をコピーしました",
-    "file_icon_default": "📄",
-    "file_icon_video": "🎬",
-    "file_icon_pdf": "📕"
+    "file_icon_default": "ファイル",
+    "file_icon_video": "動画",
+    "file_icon_pdf": "PDF"
   },
-
   "categories": {
-    "title": "📂 カテゴリ管理",
-    "new": "+ 新規カテゴリ",
+    "title": "カテゴリ管理",
+    "new": "新規カテゴリ",
     "name": "名前",
     "description": "説明",
     "parent": "親カテゴリ",
@@ -139,10 +135,9 @@
     "delete_confirm": "このカテゴリを削除しますか？",
     "save_error": "カテゴリの保存"
   },
-
   "tags": {
-    "title": "🏷️ タグ管理",
-    "new": "+ 新規タグ",
+    "title": "タグ管理",
+    "new": "新規タグ",
     "name": "タグ名",
     "slug": "スラッグ",
     "content_count": "コンテンツ数",
@@ -152,9 +147,8 @@
     "delete_confirm": "このタグを削除しますか？",
     "save_error": "タグの保存"
   },
-
   "comments": {
-    "title": "💬 コメント管理",
+    "title": "コメント管理",
     "author": "作成者",
     "content": "内容",
     "post": "記事",
@@ -162,9 +156,9 @@
     "time": "日時",
     "actions": "操作",
     "anonymous": "匿名",
-    "view": "🔗 表示",
-    "approve": "✓ 承認",
-    "spam": "🚫 スパム",
+    "view": "表示",
+    "approve": "承認",
+    "spam": "スパム",
     "status_pending": "審査中",
     "status_approved": "承認済み",
     "status_spam": "スパム",
@@ -172,10 +166,9 @@
     "approve_error": "コメント承認",
     "spam_error": "スパム指定"
   },
-
   "navigation_menu": {
-    "title": "🧭 ナビゲーションメニュー",
-    "new": "+ メニュー項目を追加",
+    "title": "ナビゲーションメニュー",
+    "new": "メニュー項目を追加",
     "label": "ラベル",
     "url": "URL",
     "order": "順序",
@@ -188,9 +181,8 @@
     "delete_confirm": "このメニュー項目を削除しますか？",
     "save_error": "メニューの保存"
   },
-
   "users": {
-    "title": "👥 ユーザー管理",
+    "title": "ユーザー管理",
     "count": "全 {n} ユーザー",
     "col_username": "ユーザー名",
     "col_email": "メールアドレス",
@@ -205,7 +197,7 @@
     "status_disabled": "無効",
     "enable": "有効化",
     "disable": "無効化",
-    "reset_password": "🔑",
+    "reset_password": "リセット",
     "no_users": "ユーザーがありません",
     "no_email": "メールアドレスがありません",
     "reset_confirm": "{name} のパスワードをリセットしますか？",
@@ -214,9 +206,8 @@
     "role_error": "権限更新",
     "reset_error": "パスワードリセット"
   },
-
   "apikeys": {
-    "title": "🔑 API キー",
+    "title": "API キー",
     "generate": "新しいキーを生成",
     "label": "ラベル",
     "scopes": "権限範囲",
@@ -224,23 +215,22 @@
     "created": "作成日時",
     "revoke": "無効化",
     "revoke_confirm": "このキーは永久に無効化されます。続行しますか？",
-    "copy_warning": "⚠️ このキーをコピーしてください。再度表示されません",
+    "copy_warning": "このキーをコピーしてください。再度表示されません",
     "no_keys": "API キーがありません",
     "scope_all": "全権限",
     "scope_read": "読み取り専用",
     "scope_hint": "デフォルト：読み取り専用。\"*:*\" を選択すると管理者権限になります。",
     "revoke_error": "無効化"
   },
-
   "webhooks": {
-    "title": "🔗 Webhook",
-    "new": "+ 新規 Webhook",
+    "title": "Webhook",
+    "new": "新規 Webhook",
     "url": "URL",
     "events": "イベント",
     "status": "状態",
     "actions": "操作",
-    "active": "✅ 有効",
-    "inactive": "❌ 無効",
+    "active": "有効",
+    "inactive": "無効",
     "delete": "削除",
     "no_items": "Webhook がありません",
     "delete_confirm": "この Webhook を削除しますか？",
@@ -248,9 +238,8 @@
     "delivery_log": "配信ログ",
     "stats": "統計"
   },
-
   "settings": {
-    "title": "⚙️ サイト設定",
+    "title": "サイト設定",
     "loading": "読み込み中...",
     "site_name": "サイト名",
     "compliance": "コンプライアンス",
@@ -269,32 +258,30 @@
     "timezone": "タイムゾーン",
     "save": "設定を保存",
     "saving": "保存中...",
-    "saved": "✅ 保存完了",
+    "saved": "保存完了",
     "save_error": "保存に失敗しました"
   },
-
   "theme": {
-    "title": "🎨 テーマ",
+    "title": "テーマ",
     "brand_colors": "ブランドカラー",
     "primary_color": "メインカラー",
     "bg_color": "背景色",
-    "typography": "🔤 タイポグラフィ",
+    "typography": "タイポグラフィ",
     "font_family": "フォント",
-    "layout": "📐 レイアウト",
+    "layout": "レイアウト",
     "container_width": "コンテナ幅",
-    "custom_css": "📝 カスタム CSS",
-    "saved": "✅ 保存完了",
-    "tip": "💡 ヒント：変更はすぐに反映されます",
+    "custom_css": "カスタム CSS",
+    "saved": "保存完了",
+    "tip": "ヒント：変更はすぐに反映されます",
     "save": "テーマを保存",
     "save_error": "テーマの保存"
   },
-
   "themeManager": {
-    "title": "📦 テーマ管理",
+    "title": "テーマ管理",
     "active_theme": "現在のテーマ",
     "built_in": "組み込みテーマ",
-    "upload": "📤 カスタムテーマをアップロード",
-    "how_to": "💡 カスタムテーマの作成方法",
+    "upload": "カスタムテーマをアップロード",
+    "how_to": "カスタムテーマの作成方法",
     "activate": "有効化",
     "delete": "削除",
     "no_themes": "テーマがありません",
@@ -304,9 +291,8 @@
     "activate_success": "テーマが有効化されました",
     "error": "テーマ操作に失敗しました"
   },
-
   "audit": {
-    "title": "📋 監査ログ",
+    "title": "監査ログ",
     "all_actions": "すべての操作",
     "action_create": "作成",
     "action_update": "更新",
@@ -319,82 +305,75 @@
     "col_time": "日時",
     "col_action": "操作",
     "col_actor": "実行者",
-    "col_actor_agent": "🤖 Agent",
-    "col_actor_user": "👤 ユーザー",
+    "col_actor_agent": "Agent",
+    "col_actor_user": "ユーザー",
     "col_target": "対象",
     "no_items": "監査ログがありません"
   },
-
   "workflow": {
-    "title": "✅ レビューキュー",
-    "approve": "✓ 承認",
-    "reject": "✗ 却下",
+    "title": "レビューキュー",
+    "approve": "承認",
+    "reject": "却下",
     "no_items": "レビュー待ちがありません",
     "approve_error": "承認",
     "reject_error": "却下"
   },
-
   "plugins": {
-    "title": "🧩 プラグインマーケット",
-    "refresh": "🔄 更新",
-    "installed": "✅ インストール済み",
+    "title": "プラグインマーケット",
+    "refresh": "更新",
+    "installed": "インストール済み",
     "install": "インストール",
-    "uninstall": "🗑️ アンインストール",
+    "uninstall": "アンインストール",
     "no_items": "プラグインがありません",
     "version": "バージョン",
     "author": "作者",
     "uninstall_confirm": "このプラグインをアンインストールしますか？",
     "error": "プラグイン操作に失敗しました"
   },
-
   "agents": {
-    "title": "🤖 エージェントマーケット",
+    "title": "エージェントマーケット",
     "search": "エージェント検索",
     "all_tags": "すべてのタグ",
     "all_tools": "すべてのツール",
     "tools": "ツール",
     "endpoints": "エンドポイント",
-    "details": "📋 詳細",
+    "details": "詳細",
     "last_online": "最終オンライン",
-    "status_online": "🟢 オンライン",
+    "status_online": "オンライン",
     "status_offline": "オフライン",
     "no_items": "エージェントがありません"
   },
-
   "pipelines": {
-    "title": "🔄 パイプラインテンプレート",
+    "title": "パイプラインテンプレート",
     "no_items": "パイプラインテンプレートがありません"
   },
-
   "revisions": {
-    "title": "📜 バージョン履歴",
+    "title": "バージョン履歴",
     "restore": "復元",
     "col_version": "バージョン",
     "col_time": "日時",
     "col_author": "作成者",
-    "col_author_agent": "🤖 Agent",
-    "col_author_user": "👤 ユーザー",
+    "col_author_agent": "Agent",
+    "col_author_user": "ユーザー",
     "no_items": "バージョン履歴がありません",
     "restore_confirm": "バージョン {version} に復元しますか？",
     "restore_success": "バージョン {version} に復元しました",
     "restore_error": "バージョン復元"
   },
-
   "relationships": {
-    "title": "🔗 コンテンツ関連",
+    "title": "コンテンツ関連",
     "target_id": "ターゲット文書 ID",
     "relation_type": "関連タイプ",
     "type_related": "関連",
     "type_parent": "親",
     "type_reference": "参照",
     "add": "関連を追加",
-    "remove": "✕ 削除",
+    "remove": "削除",
     "outbound": "出力関連",
     "inbound": "入力関連",
     "graph": "関連グラフ",
     "no_items": "関連がありません"
   },
-
   "richEditor": {
     "bold": "太字",
     "italic": "斜体",
@@ -402,20 +381,19 @@
     "code": "インラインコード",
     "ul": "箇条書き",
     "ol": "番号付きリスト",
-    "blockquote": "❝ 引用",
+    "blockquote": "引用",
     "code_block": "コードブロック",
-    "media": "🖼️ メディアライブラリ",
-    "image_url": "🔗 画像 URL",
-    "media_title": "🖼️ メディアライブラリ",
-    "close": "✕ 閉じる",
+    "media": "メディアライブラリ",
+    "image_url": "画像 URL",
+    "media_title": "メディアライブラリ",
+    "close": "閉じる",
     "cancel": "キャンセル",
     "insert": "挿入",
     "url_placeholder": "画像 URL を入力...",
     "empty": "メディアファイルがありません"
   },
-
   "apiDocs": {
-    "title": "📖 API ドキュメント",
+    "title": "API ドキュメント",
     "rest_api": "REST API",
     "graphql": "GraphQL API",
     "authentication": "認証",
@@ -446,7 +424,6 @@
     "error_409": "競合",
     "error_500": "サーバー内部エラー"
   },
-
   "common": {
     "save": "保存",
     "cancel": "キャンセル",

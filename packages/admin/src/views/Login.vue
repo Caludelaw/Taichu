@@ -1,7 +1,7 @@
 <template>
   <div class="login-page">
     <div class="login-card">
-      <h1>{{ $t('login.title') }}</h1>
+      <h1><Icon name="lightning" :size="24" /> {{ $t('login.title') }}</h1>
       <p class="sub">{{ $t('login.subtitle') }}</p>
 
       <div class="tabs">
@@ -28,6 +28,7 @@ import { useRouter } from 'vue-router'
 import { auth } from '../stores/auth.js'
 import { api } from '../api/index.js'
 import { useI18n } from '../i18n.js'
+import Icon from '../components/Icon.vue'
 
 const router = useRouter()
 const { t: $t } = useI18n()

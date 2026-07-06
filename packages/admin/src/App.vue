@@ -9,45 +9,49 @@
     <div v-if="sidebarOpen" class="sidebar-overlay" @click="sidebarOpen = false"></div>
 
     <aside class="sidebar" :class="{ open: sidebarOpen }">
-      <div class="logo" @click="$router.push('/dashboard'); sidebarOpen = false">{{ $t('app.logo') }}</div>
+      <div class="logo" @click="$router.push('/dashboard'); sidebarOpen = false">
+        <Icon name="lightning" :size="18" /> {{ $t('app.logo') }}
+      </div>
       <nav>
         <div class="nav-section">{{ $t('nav.section_content') }}</div>
         <template v-for="t in types" :key="t.name">
-          <router-link :to="`/content/${t.name}`" class="nav-item" @click="sidebarOpen = false">{{ t.label }}</router-link>
+          <router-link :to="`/content/${t.name}`" class="nav-item" @click="sidebarOpen = false">
+            <Icon name="file" :size="14" /> {{ t.label }}
+          </router-link>
         </template>
-        <router-link to="/media" class="nav-item" @click="sidebarOpen = false">{{ $t('nav.media') }}</router-link>
-        <router-link to="/categories" class="nav-item" @click="sidebarOpen = false">{{ $t('nav.categories') }}</router-link>
-        <router-link to="/tags" class="nav-item" @click="sidebarOpen = false">{{ $t('nav.tags') }}</router-link>
-        <router-link to="/comments" class="nav-item" @click="sidebarOpen = false">{{ $t('nav.comments') }}</router-link>
-        <router-link to="/navigation" class="nav-item" @click="sidebarOpen = false">{{ $t('nav.navigation') }}</router-link>
+        <router-link to="/media" class="nav-item" @click="sidebarOpen = false"><Icon name="image" :size="14" /> {{ $t('nav.media') }}</router-link>
+        <router-link to="/categories" class="nav-item" @click="sidebarOpen = false"><Icon name="folder" :size="14" /> {{ $t('nav.categories') }}</router-link>
+        <router-link to="/tags" class="nav-item" @click="sidebarOpen = false"><Icon name="tag" :size="14" /> {{ $t('nav.tags') }}</router-link>
+        <router-link to="/comments" class="nav-item" @click="sidebarOpen = false"><Icon name="message-circle" :size="14" /> {{ $t('nav.comments') }}</router-link>
+        <router-link to="/navigation" class="nav-item" @click="sidebarOpen = false"><Icon name="compass" :size="14" /> {{ $t('nav.navigation') }}</router-link>
 
         <div class="nav-section">{{ $t('nav.section_manage') }}</div>
-        <router-link to="/users" class="nav-item" @click="sidebarOpen = false">{{ $t('nav.users') }}</router-link>
-        <router-link to="/apikeys" class="nav-item" @click="sidebarOpen = false">{{ $t('nav.apikeys') }}</router-link>
-        <router-link to="/webhooks" class="nav-item" @click="sidebarOpen = false">{{ $t('nav.webhooks') }}</router-link>
-        <router-link to="/settings" class="nav-item" @click="sidebarOpen = false">{{ $t('nav.settings') }}</router-link>
-        <router-link to="/theme" class="nav-item" @click="sidebarOpen = false">{{ $t('nav.theme') }}</router-link>
-        <router-link to="/theme-manager" class="nav-item" @click="sidebarOpen = false">{{ $t('nav.theme_manager') }}</router-link>
+        <router-link to="/users" class="nav-item" @click="sidebarOpen = false"><Icon name="users" :size="14" /> {{ $t('nav.users') }}</router-link>
+        <router-link to="/apikeys" class="nav-item" @click="sidebarOpen = false"><Icon name="key" :size="14" /> {{ $t('nav.apikeys') }}</router-link>
+        <router-link to="/webhooks" class="nav-item" @click="sidebarOpen = false"><Icon name="link" :size="14" /> {{ $t('nav.webhooks') }}</router-link>
+        <router-link to="/settings" class="nav-item" @click="sidebarOpen = false"><Icon name="settings" :size="14" /> {{ $t('nav.settings') }}</router-link>
+        <router-link to="/theme" class="nav-item" @click="sidebarOpen = false"><Icon name="palette" :size="14" /> {{ $t('nav.theme') }}</router-link>
+        <router-link to="/theme-manager" class="nav-item" @click="sidebarOpen = false"><Icon name="package" :size="14" /> {{ $t('nav.theme_manager') }}</router-link>
 
         <div class="nav-section">{{ $t('nav.section_security') }}</div>
-        <router-link to="/audit" class="nav-item" @click="sidebarOpen = false">{{ $t('nav.audit') }}</router-link>
-        <router-link to="/workflow" class="nav-item" @click="sidebarOpen = false">{{ $t('nav.workflow') }}</router-link>
+        <router-link to="/audit" class="nav-item" @click="sidebarOpen = false"><Icon name="clipboard" :size="14" /> {{ $t('nav.audit') }}</router-link>
+        <router-link to="/workflow" class="nav-item" @click="sidebarOpen = false"><Icon name="check-circle" :size="14" /> {{ $t('nav.workflow') }}</router-link>
 
         <div class="nav-section">{{ $t('nav.section_dev') }}</div>
-        <router-link to="/plugins" class="nav-item" @click="sidebarOpen = false">{{ $t('nav.plugins') }}</router-link>
-        <router-link to="/agents" class="nav-item" @click="sidebarOpen = false">{{ $t('nav.agents') }}</router-link>
-        <router-link to="/pipelines" class="nav-item" @click="sidebarOpen = false">{{ $t('nav.pipelines') }}</router-link>
-        <router-link to="/api-docs" class="nav-item" @click="sidebarOpen = false">{{ $t('nav.api_docs') }}</router-link>
-        <a href="/api/graphql" target="_blank" class="nav-item">{{ $t('nav.graphiql') }}</a>
-        <a href="/ws-test.html" target="_blank" class="nav-item">{{ $t('nav.ws_test') }}</a>
+        <router-link to="/plugins" class="nav-item" @click="sidebarOpen = false"><Icon name="puzzle" :size="14" /> {{ $t('nav.plugins') }}</router-link>
+        <router-link to="/agents" class="nav-item" @click="sidebarOpen = false"><Icon name="bot" :size="14" /> {{ $t('nav.agents') }}</router-link>
+        <router-link to="/pipelines" class="nav-item" @click="sidebarOpen = false"><Icon name="refresh" :size="14" /> {{ $t('nav.pipelines') }}</router-link>
+        <router-link to="/api-docs" class="nav-item" @click="sidebarOpen = false"><Icon name="book" :size="14" /> {{ $t('nav.api_docs') }}</router-link>
+        <a href="/api/graphql" target="_blank" class="nav-item"><Icon name="microscope" :size="14" /> {{ $t('nav.graphiql') }}</a>
+        <a href="/ws-test.html" target="_blank" class="nav-item"><Icon name="antenna" :size="14" /> {{ $t('nav.ws_test') }}</a>
       </nav>
       <div class="sidebar-footer">
         <button class="btn-theme" @click="toggleDark" :title="isDark ? $t('nav.toggle_light') : $t('nav.toggle_dark')">
-          {{ isDark ? '☀️' : '🌙' }}
+          <Icon :name="isDark ? 'sun' : 'moon'" :size="16" />
         </button>
         <div class="lang-switch">
           <select v-model="locale" @change="switchLang" class="lang-select">
-            <option v-for="l in i18n.supportedLocales" :key="l.code" :value="l.code">{{ l.flag }} {{ l.label }}</option>
+            <option v-for="l in i18n.supportedLocales" :key="l.code" :value="l.code">{{ l.label }}</option>
           </select>
         </div>
         <span class="user">{{ auth.user?.username }}</span>
@@ -67,6 +71,7 @@ import { useRouter } from 'vue-router'
 import { auth } from './stores/auth.js'
 import { api } from './api/index.js'
 import { useI18n } from './i18n.js'
+import Icon from './components/Icon.vue'
 
 const router = useRouter()
 const types = ref([])
@@ -145,7 +150,7 @@ function logout() {
   padding: 12px 20px 6px; letter-spacing: 0.5px;
 }
 .nav-item {
-  display: block; padding: 8px 20px; color: var(--text-secondary); text-decoration: none;
+  display: flex; align-items: center; gap: 6px; padding: 8px 20px; color: var(--text-secondary); text-decoration: none;
   font-size: 13px; transition: all 0.15s;
 }
 .nav-item:hover, .nav-item.router-link-active { color: var(--primary); background: var(--primary-bg); }

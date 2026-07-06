@@ -67,6 +67,7 @@ import { api } from '../api/index.js'
 import RichEditor from '../components/RichEditor.vue'
 import RelationshipsManager from '../components/RelationshipsManager.vue'
 import { useI18n } from '../i18n.js'
+import Icon from '../components/Icon.vue'
 
 const { t: $t } = useI18n()
 const props = defineProps({ type: String, id: String, types: Array })

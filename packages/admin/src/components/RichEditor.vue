@@ -12,14 +12,14 @@
       <span class="sep"></span>
       <button @click="editor.chain().focus().toggleBulletList().run()" :class="{ active: editor.isActive('bulletList') }" :title="$t('richEditor.ul')">•</button>
       <button @click="editor.chain().focus().toggleOrderedList().run()" :class="{ active: editor.isActive('orderedList') }" :title="$t('richEditor.ol')">1.</button>
-      <button @click="editor.chain().focus().toggleBlockquote().run()" :class="{ active: editor.isActive('blockquote') }" :title="$t('richEditor.blockquote')">❝</button>
-      <button @click="editor.chain().focus().toggleCodeBlock().run()" :class="{ active: editor.isActive('codeBlock') }" :title="$t('richEditor.code_block')">&lt;code/&gt;</button>
+      <button @click="editor.chain().focus().toggleBlockquote().run()" :class="{ active: editor.isActive('blockquote') }" :title="$t('richEditor.blockquote')"><Icon name="blockquote" :size="14" /></button>
+      <button @click="editor.chain().focus().toggleCodeBlock().run()" :class="{ active: editor.isActive('codeBlock') }" :title="$t('richEditor.code_block')"><Icon name="code-block" :size="14" /></button>
       <span class="sep"></span>
-      <button @click="openMediaBrowser" :title="$t('richEditor.media')">🖼️</button>
-      <button @click="addImageByUrl" :title="$t('richEditor.image_url')">🔗</button>
-      <button @click="editor.chain().focus().setHorizontalRule().run()" title="—">—</button>
-      <button @click="editor.chain().focus().undo().run()" title="Undo (Ctrl+Z)">↩</button>
-      <button @click="editor.chain().focus().redo().run()" title="Redo (Ctrl+Y)">↪</button>
+      <button @click="openMediaBrowser" :title="$t('richEditor.media')"><Icon name="image" :size="14" /></button>
+      <button @click="addImageByUrl" :title="$t('richEditor.image_url')"><Icon name="link" :size="14" /></button>
+      <button @click="editor.chain().focus().setHorizontalRule().run()" title="—"><Icon name="bars-horizontal" :size="14" /></button>
+      <button @click="editor.chain().focus().undo().run()" title="Undo (Ctrl+Z)"><Icon name="undo" :size="14" /></button>
+      <button @click="editor.chain().focus().redo().run()" title="Redo (Ctrl+Y)"><Icon name="redo" :size="14" /></button>
     </div>
     <editor-content :editor="editor" class="editor-content" />
 
@@ -52,6 +52,7 @@ import Image from '@tiptap/extension-image'
 import Link from '@tiptap/extension-link'
 import Placeholder from '@tiptap/extension-placeholder'
 import { useI18n } from '../i18n.js'
+import Icon from './Icon.vue'
 
 const { t: $t } = useI18n()
 

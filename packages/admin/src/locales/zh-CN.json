@@ -107,7 +107,10 @@
     "load_error": "Failed to load document",
     "fallback_title": "标题",
     "fallback_slug": "Slug",
-    "fallback_body": "正文"
+    "fallback_body": "正文",
+    "preview": "预览",
+    "close_preview": "关闭预览",
+    "no_preview_content": "暂无内容可预览"
   },
   "media": {
     "title": "媒体库",

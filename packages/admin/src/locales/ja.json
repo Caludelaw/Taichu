@@ -107,7 +107,10 @@
     "load_error": "ドキュメントの読み込みに失敗しました",
     "fallback_title": "タイトル",
     "fallback_slug": "スラッグ",
-    "fallback_body": "本文"
+    "fallback_body": "本文",
+    "preview": "プレビュー",
+    "close_preview": "プレビューを閉じる",
+    "no_preview_content": "プレビューするコンテンツがありません"
   },
   "media": {
     "title": "メディアライブラリ",

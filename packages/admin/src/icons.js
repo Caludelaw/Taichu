@@ -194,6 +194,10 @@ const icons = {
   dot: {
     paths: ['M12 12h.01'],
     circlePoints: [{ cx: 12, cy: 12, r: 0.5 }]
+  },
+  eye: {
+    paths: ['M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z'],
+    paths2: ['M12 9a3 3 0 100 6 3 3 0 000-6z']
   }
 }
 

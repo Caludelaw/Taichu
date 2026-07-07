@@ -107,7 +107,10 @@
     "load_error": "Failed to load document",
     "fallback_title": "Title",
     "fallback_slug": "Slug",
-    "fallback_body": "Body"
+    "fallback_body": "Body",
+    "preview": "Preview",
+    "close_preview": "Close Preview",
+    "no_preview_content": "No content to preview"
   },
   "media": {
     "title": "Media Library",

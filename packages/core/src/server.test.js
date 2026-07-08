@@ -111,6 +111,62 @@ describe('Revisions', () => {
     const changes = diffObjects({ a: 1, b: [2] }, { a: 1, b: [2] });
     assert.equal(changes.length, 0);
   });
+
+  it('should detect removed fields', async () => {
+    const { diffObjects } = await import('../../server/src/revisions.js');
+    const changes = diffObjects(
+      { title: 'A', body: 'B' },
+      { title: 'A' }
+    );
+    assert.equal(changes.length, 1);
+    assert.equal(changes[0].field, 'body');
+    assert.equal(changes[0].from, 'B');
+    assert.equal(changes[0].to, undefined);
+  });
+
+  it('should detect nested object changes', async () => {
+    const { diffObjects } = await import('../../server/src/revisions.js');
+    const changes = diffObjects(
+      { seo: { title: 'Old', desc: 'Old desc' } },
+      { seo: { title: 'New', desc: 'Old desc' } }
+    );
+    assert.equal(changes.length, 1);
+    assert.equal(changes[0].field, 'seo');
+  });
+
+  it('should detect array changes', async () => {
+    const { diffObjects } = await import('../../server/src/revisions.js');
+    const changes = diffObjects(
+      { tags: ['a', 'b'] },
+      { tags: ['a', 'b', 'c'] }
+    );
+    assert.equal(changes.length, 1);
+    assert.equal(changes[0].field, 'tags');
+  });
+
+  it('should handle null and undefined values', async () => {
+    const { diffObjects } = await import('../../server/src/revisions.js');
+    const changes = diffObjects(
+      { title: null, slug: 'a' },
+      { title: 'New', slug: undefined }
+    );
+    assert.equal(changes.length, 2);
+  });
+
+  it('should handle empty objects', async () => {
+    const { diffObjects } = await import('../../server/src/revisions.js');
+    const changes = diffObjects({}, {});
+    assert.equal(changes.length, 0);
+  });
+
+  it('should handle one empty object', async () => {
+    const { diffObjects } = await import('../../server/src/revisions.js');
+    const changes = diffObjects({}, { title: 'New' });
+    assert.equal(changes.length, 1);
+    assert.equal(changes[0].field, 'title');
+    assert.equal(changes[0].from, undefined);
+    assert.equal(changes[0].to, 'New');
+  });
 });
 
 // ════════════════════════════════════════════════════════════

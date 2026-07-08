@@ -110,7 +110,8 @@
     "fallback_body": "正文",
     "preview": "预览",
     "close_preview": "关闭预览",
-    "no_preview_content": "暂无内容可预览"
+    "no_preview_content": "暂无内容可预览",
+    "revisions": "版本历史"
   },
   "media": {
     "title": "媒体库",
@@ -361,7 +362,15 @@
     "no_items": "暂无版本记录",
     "restore_confirm": "确认恢复到版本 {version}？",
     "restore_success": "已恢复到版本 {version}",
-    "restore_error": "恢复版本"
+    "restore_error": "恢复版本",
+    "diff_title": "变更对比",
+    "changes_count": "{n} 处变更",
+    "no_changes": "无变更",
+    "compare": "对比",
+    "cancel_compare": "取消对比",
+    "compare_select": "选择两个版本进行对比",
+    "compare_from": "旧版本",
+    "compare_to": "新版本"
   },
   "relationships": {
     "title": "内容关系",

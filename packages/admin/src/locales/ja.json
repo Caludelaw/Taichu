@@ -110,7 +110,8 @@
     "fallback_body": "本文",
     "preview": "プレビュー",
     "close_preview": "プレビューを閉じる",
-    "no_preview_content": "プレビューするコンテンツがありません"
+    "no_preview_content": "プレビューするコンテンツがありません",
+    "revisions": "バージョン履歴"
   },
   "media": {
     "title": "メディアライブラリ",
@@ -361,7 +362,15 @@
     "no_items": "バージョン履歴がありません",
     "restore_confirm": "バージョン {version} に復元しますか？",
     "restore_success": "バージョン {version} に復元しました",
-    "restore_error": "バージョン復元"
+    "restore_error": "バージョン復元",
+    "diff_title": "変更の比較",
+    "changes_count": "{n} 件の変更",
+    "no_changes": "変更なし",
+    "compare": "比較",
+    "cancel_compare": "比較をキャンセル",
+    "compare_select": "比較するバージョンを2つ選択",
+    "compare_from": "旧バージョン",
+    "compare_to": "新バージョン"
   },
   "relationships": {
     "title": "コンテンツ関連",

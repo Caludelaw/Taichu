@@ -110,7 +110,8 @@
     "fallback_body": "Body",
     "preview": "Preview",
     "close_preview": "Close Preview",
-    "no_preview_content": "No content to preview"
+    "no_preview_content": "No content to preview",
+    "revisions": "Revision History"
   },
   "media": {
     "title": "Media Library",
@@ -361,7 +362,15 @@
     "no_items": "No revisions yet",
     "restore_confirm": "Restore version {version}?",
     "restore_success": "Restored to version {version}",
-    "restore_error": "Restore version"
+    "restore_error": "Restore version",
+    "diff_title": "Change Comparison",
+    "changes_count": "{n} change(s)",
+    "no_changes": "No changes",
+    "compare": "Compare",
+    "cancel_compare": "Cancel Compare",
+    "compare_select": "Select two versions to compare",
+    "compare_from": "Old Version",
+    "compare_to": "New Version"
   },
   "relationships": {
     "title": "Content Relationships",

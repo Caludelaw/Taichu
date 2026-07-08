@@ -142,7 +142,7 @@
 | CORS Origin Configuration (TAICHU_CORS_ORIGIN env) | P1 | ✅ Done |
 | Admin Icon System (emoji → SVG icons) | P1 | ✅ Done |
 | Content Preview in Admin | P2 | ✅ Done |
-| Revisions Diff Viewer UI | P2 | ⬜ Todo |
+| Revisions Diff Viewer UI | P2 | ✅ Done |
 | Drag-and-Drop Content Ordering | P2 | ⬜ Todo |
 | Batch GET API Endpoint | P2 | ⬜ Todo |
 | Federation Registry Persistence (memory → store) | P2 | ⬜ Todo |

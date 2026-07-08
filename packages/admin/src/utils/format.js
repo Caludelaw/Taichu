@@ -45,6 +45,14 @@ export function notifyError(action, err) {
 }
 
 /**
+ * Show a user-facing success notification.
+ * @param {string} msg — the success message
+ */
+export function notifySuccess(msg) {
+  alert(msg);
+}
+
+/**
  * Truncate a string to maxLen with ellipsis.
  */
 export function truncate(s, maxLen = 80) {

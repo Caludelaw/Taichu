@@ -11,6 +11,9 @@
         <button class="btn btn-preview" :class="{ active: showPreview }" @click="togglePreview">
           <Icon name="eye" :size="14" /> {{ showPreview ? $t('contentEdit.close_preview') : $t('contentEdit.preview') }}
         </button>
+        <button v-if="!isNew" class="btn" @click="goRevisions">
+          <Icon name="clock" :size="14" /> {{ $t('contentEdit.revisions') }}
+        </button>
         <button class="btn" @click="save('draft')">{{ $t('contentEdit.save_draft') }}</button>
         <button class="btn btn-publish" @click="save('published')">{{ $t('contentEdit.publish') }}</button>
       </div>
@@ -117,6 +120,10 @@ const showPreview = ref(false)
 
 function togglePreview() {
   showPreview.value = !showPreview.value
+}
+
+function goRevisions() {
+  router.push(`/content/${props.type}/${route.params.id}/revisions`)
 }
 
 const previewHtml = computed(() => {

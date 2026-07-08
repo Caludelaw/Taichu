@@ -76,6 +76,10 @@ export const api = {
 
   // Revisions
   getRevisions: (type, id) => request(`/content/${type}/${id}/revisions`),
+  getRevisionDiff: (type, id, fromRevId, toRevId) =>
+    request(`/content/${type}/${id}/revisions/diff?from=${fromRevId}&to=${toRevId}`),
+  restoreRevision: (type, id, revId) =>
+    request(`/content/${type}/${id}/revisions/${revId}/restore`, { method: 'POST' }),
 
   // Collaboration
   getCollabSessions: () => request('/collab/sessions'),

@@ -218,6 +218,35 @@ export async function apiRoutes(ctx) {
     return;
   }
 
+  // /api/content/:type/reorder — drag-and-drop reorder
+  const reorderMatch = pathname.match(/^\/api\/content\/([a-z][a-z0-9_]*)\/reorder$/);
+  if (reorderMatch && method === 'PUT') {
+    const authResult = await requireScopedAuth(ctx, `${reorderMatch[1]}:write`);
+    if (!authResult.authenticated) {
+      ctx.res.writeHead(authResult.status, { 'Content-Type': 'application/json' });
+      ctx.res.end(JSON.stringify({ error: authResult.error, message: authResult.message }));
+      return;
+    }
+    ctx.actor = authResult.actor;
+
+    const { ids } = ctx.body || {};
+    if (!Array.isArray(ids) || ids.length === 0) {
+      ctx.res.writeHead(400, { 'Content-Type': 'application/json' });
+      ctx.res.end(JSON.stringify({ error: 'VALIDATION_ERROR', message: 'ids[] array is required' }));
+      return;
+    }
+
+    try {
+      const docs = await ctx.store.reorder(ids);
+      ctx.res.writeHead(200, { 'Content-Type': 'application/json' });
+      ctx.res.end(JSON.stringify({ docs, total: docs.length }));
+    } catch (e) {
+      ctx.res.writeHead(500, { 'Content-Type': 'application/json' });
+      ctx.res.end(JSON.stringify({ error: 'INTERNAL_ERROR', message: e.message }));
+    }
+    return;
+  }
+
   // /api/content/:type/batch — bulk operations
   const batchMatch = pathname.match(/^\/api\/content\/([a-z][a-z0-9_]*)\/batch$/);
   if (batchMatch && method === 'POST') {

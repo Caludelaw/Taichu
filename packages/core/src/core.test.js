@@ -170,6 +170,67 @@ describe('MemoryStore', () => {
     const count = await store.count({ type: 'article' });
     assert.equal(count, 2);
   });
+
+  it('should include sortOrder in created documents', async () => {
+    const store = createMemoryStore();
+    const doc = await store.create({ type: 'article', data: { title: 'Test' } });
+    assert.equal(doc.sortOrder, 0);
+
+    const doc2 = await store.create({ type: 'article', data: { title: 'B' }, sortOrder: 5 });
+    assert.equal(doc2.sortOrder, 5);
+  });
+
+  it('should list documents sorted by sortOrder', async () => {
+    const store = createMemoryStore();
+    await store.create({ type: 'article', data: { title: 'C' }, sortOrder: 2 });
+    await store.create({ type: 'article', data: { title: 'A' }, sortOrder: 0 });
+    await store.create({ type: 'article', data: { title: 'B' }, sortOrder: 1 });
+
+    const asc = await store.list({ type: 'article', orderBy: 'sortOrder', order: 'asc' });
+    assert.equal(asc[0].data.title, 'A');
+    assert.equal(asc[1].data.title, 'B');
+    assert.equal(asc[2].data.title, 'C');
+
+    const desc = await store.list({ type: 'article', orderBy: 'sortOrder', order: 'desc' });
+    assert.equal(desc[0].data.title, 'C');
+    assert.equal(desc[2].data.title, 'A');
+  });
+
+  it('should reorder documents by id array', async () => {
+    const store = createMemoryStore();
+    const a = await store.create({ type: 'article', data: { title: 'A' }, sortOrder: 0 });
+    const b = await store.create({ type: 'article', data: { title: 'B' }, sortOrder: 1 });
+    const c = await store.create({ type: 'article', data: { title: 'C' }, sortOrder: 2 });
+
+    // Reverse order: C, B, A
+    const result = await store.reorder([c.id, b.id, a.id]);
+    assert.equal(result.length, 3);
+    assert.equal(result[0].sortOrder, 0);
+    assert.equal(result[1].sortOrder, 1);
+    assert.equal(result[2].sortOrder, 2);
+    assert.equal(result[0].id, c.id);
+
+    // Verify persisted
+    const docs = await store.list({ type: 'article', orderBy: 'sortOrder', order: 'asc' });
+    assert.equal(docs[0].data.title, 'C');
+    assert.equal(docs[1].data.title, 'B');
+    assert.equal(docs[2].data.title, 'A');
+  });
+
+  it('should handle empty reorder array', async () => {
+    const store = createMemoryStore();
+    const result = await store.reorder([]);
+    assert.deepEqual(result, []);
+  });
+
+  it('should skip unknown ids in reorder', async () => {
+    const store = createMemoryStore();
+    const a = await store.create({ type: 'article', data: { title: 'A' } });
+
+    const result = await store.reorder(['nonexistent', a.id]);
+    assert.equal(result.length, 1);
+    assert.equal(result[0].sortOrder, 1);
+  });
 });
 
 // ════════════════════════════════════════════════════════════

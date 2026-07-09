@@ -143,7 +143,7 @@
 | Admin Icon System (emoji → SVG icons) | P1 | ✅ Done |
 | Content Preview in Admin | P2 | ✅ Done |
 | Revisions Diff Viewer UI | P2 | ✅ Done |
-| Drag-and-Drop Content Ordering | P2 | ⬜ Todo |
+| Drag-and-Drop Content Ordering | P2 | ✅ Done |
 | Batch GET API Endpoint | P2 | ⬜ Todo |
 | Federation Registry Persistence (memory → store) | P2 | ⬜ Todo |
 | Rate Limiter Persistence (memory → store-backed) | P2 | ⬜ Todo |

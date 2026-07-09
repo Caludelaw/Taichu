@@ -2,10 +2,20 @@
   <div>
     <div class="header">
       <h2 class="page-title">{{ typeLabel }}</h2>
-      <button class="btn" @click="$router.push(`/content/${type}/new`)"><Icon name="plus" :size="14" /> {{ $t('contentList.new') }}</button>
+      <div class="header-actions">
+        <button v-if="!reorderMode" class="btn btn-outline" @click="enterReorder">{{ $t('contentList.reorder_mode') }}</button>
+        <button class="btn" @click="$router.push(`/content/${type}/new`)"><Icon name="plus" :size="14" /> {{ $t('contentList.new') }}</button>
+      </div>
     </div>
 
-    <div class="search-bar">
+    <div v-if="reorderMode" class="reorder-bar">
+      <Icon name="grip-vertical" :size="14" />
+      <span>{{ $t('contentList.reorder_hint') }}</span>
+      <button class="btn-sm btn-primary" @click="saveReorder" :disabled="reorderSaving">{{ reorderSaving ? '...' : $t('contentList.reorder_save') }}</button>
+      <button class="btn-sm" @click="exitReorder">{{ $t('contentList.reorder_exit') }}</button>
+    </div>
+
+    <div v-if="!reorderMode" class="search-bar">
       <input v-model="searchQuery" @input="debounceSearch" :placeholder="$t('contentList.search_placeholder')" class="input" />
       <select v-model="statusFilter" @change="load" class="input select-sm">
         <option value="">{{ $t('contentList.all_status') }}</option>
@@ -16,7 +26,7 @@
       </select>
     </div>
 
-    <div v-if="selected.length" class="batch-bar">
+    <div v-if="selected.length && !reorderMode" class="batch-bar">
       <span>{{ $t('contentList.selected_count', { n: selected.length }) }}</span>
       <button @click="batchAction('publish')" class="btn-sm btn-batch"><Icon name="upload-cloud" :size="12" /> {{ $t('contentList.batch_publish') }}</button>
       <button @click="batchAction('archive')" class="btn-sm btn-batch"><Icon name="package" :size="12" /> {{ $t('contentList.batch_archive') }}</button>
@@ -24,27 +34,45 @@
       <button @click="selected = []" class="btn-sm">{{ $t('contentList.cancel') }}</button>
     </div>
 
-    <table v-if="docs.length" class="table">
+    <table v-if="docs.length" class="table" :class="{ 'reorder-table': reorderMode }">
       <thead>
         <tr>
-          <th style="width:40px"><input type="checkbox" @change="toggleAll" :checked="allSelected" /></th>
+          <th v-if="!reorderMode" style="width:40px"><input type="checkbox" @change="toggleAll" :checked="allSelected" /></th>
+          <th v-else style="width:36px"></th>
           <th>{{ $t('contentList.col_title') }}</th>
           <th>{{ $t('contentList.col_status') }}</th>
           <th>{{ $t('contentList.col_updated') }}</th>
-          <th>{{ $t('contentList.col_actions') }}</th>
+          <th v-if="!reorderMode">{{ $t('contentList.col_actions') }}</th>
         </tr>
       </thead>
       <tbody>
-        <tr v-for="doc in docs" :key="doc.id" :class="{ selected: selected.includes(doc.id) }">
-          <td><input type="checkbox" :checked="selected.includes(doc.id)" @change="toggleSelect(doc.id)" /></td>
+        <tr
+          v-for="(doc, i) in docs"
+          :key="doc.id"
+          :class="{
+            selected: selected.includes(doc.id),
+            'drag-over': reorderMode && dragOverIndex === i,
+            dragging: reorderMode && dragIndex === i
+          }"
+          :draggable="reorderMode"
+          @dragstart="onDragStart($event, i)"
+          @dragover.prevent="onDragOver($event, i)"
+          @dragleave="onDragLeave(i)"
+          @drop="onDrop(i)"
+          @dragend="onDragEnd"
+        >
+          <td v-if="!reorderMode"><input type="checkbox" :checked="selected.includes(doc.id)" @change="toggleSelect(doc.id)" /></td>
+          <td v-else class="drag-handle" :title="$t('contentList.drag_handle')">
+            <Icon name="grip-vertical" :size="14" />
+          </td>
           <td>
-            <a href="#" @click.prevent="$router.push(`/content/${type}/${doc.id}`)">
+            <a href="#" @click.prevent="reorderMode ? null : $router.push(`/content/${type}/${doc.id}`)">
               {{ doc.data.title || doc.data.name || $t('contentList.untitled') }}
             </a>
           </td>
           <td><span :class="`badge badge-${doc.status}`">{{ statusLabel(doc.status) }}</span></td>
           <td class="date">{{ fmtDate(doc.updatedAt) }}</td>
-          <td>
+          <td v-if="!reorderMode">
             <button class="btn-sm" @click="$router.push(`/content/${type}/${doc.id}`)">{{ $t('contentList.edit') }}</button>
             <button class="btn-sm btn-danger" @click="remove(doc.id)">{{ $t('contentList.delete') }}</button>
           </td>
@@ -54,7 +82,7 @@
     <p v-else-if="!loading" class="empty">{{ $t('contentList.no_items', { type: typeLabel }) }}</p>
     <p v-else class="empty">{{ $t('contentList.loading') }}</p>
 
-    <div v-if="totalPages > 1" class="pagination">
+    <div v-if="totalPages > 1 && !reorderMode" class="pagination">
       <button :disabled="page <= 1" @click="goPage(page - 1)" class="btn-page">{{ $t('contentList.prev_page') }}</button>
       <span class="page-info">{{ $t('contentList.page_info', { page, totalPages, total }) }}</span>
       <button :disabled="page >= totalPages" @click="goPage(page + 1)" class="btn-page">{{ $t('contentList.next_page') }}</button>
@@ -65,7 +93,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { api } from '../api/index.js'
-import { fmtDate, statusLabel, notifyError } from '../utils/format.js'
+import { fmtDate, statusLabel, notifyError, notifySuccess } from '../utils/format.js'
 import { useI18n } from '../i18n.js'
 import Icon from '../components/Icon.vue'
 
@@ -80,6 +108,12 @@ const statusFilter = ref('')
 const pageSize = 20
 const selected = ref([])
 let searchTimer = null
+
+// Drag-and-drop reorder state
+const reorderMode = ref(false)
+const reorderSaving = ref(false)
+const dragIndex = ref(-1)
+const dragOverIndex = ref(-1)
 
 const allSelected = computed(() => docs.value.length > 0 && selected.value.length === docs.value.length)
 
@@ -155,23 +189,118 @@ async function batchAction(action) {
   }
 }
 
+// ── Drag-and-Drop Reorder ──────────────────────────
+
+function enterReorder() {
+  reorderMode.value = true
+  selected.value = []
+  // Load all items for reorder (no pagination limit)
+  loadAll()
+}
+
+async function loadAll() {
+  loading.value = true
+  try {
+    const res = await api.list(props.type, { limit: 1000, orderBy: 'sort_order', order: 'asc' })
+    docs.value = res.docs || []
+    total.value = docs.value.length
+  } catch (e) {
+    console.error(e)
+  } finally {
+    loading.value = false
+  }
+}
+
+function exitReorder() {
+  reorderMode.value = false
+  dragIndex.value = -1
+  dragOverIndex.value = -1
+  page.value = 1
+  load()
+}
+
+function onDragStart(e, i) {
+  dragIndex.value = i
+  e.dataTransfer.effectAllowed = 'move'
+  e.dataTransfer.setData('text/plain', String(i))
+}
+
+function onDragOver(e, i) {
+  if (dragIndex.value === -1 || dragIndex.value === i) return
+  e.dataTransfer.dropEffect = 'move'
+  dragOverIndex.value = i
+}
+
+function onDragLeave(i) {
+  if (dragOverIndex.value === i) dragOverIndex.value = -1
+}
+
+function onDrop(i) {
+  if (dragIndex.value === -1 || dragIndex.value === i) return
+  const arr = [...docs.value]
+  const [moved] = arr.splice(dragIndex.value, 1)
+  arr.splice(i, 0, moved)
+  docs.value = arr
+  dragIndex.value = -1
+  dragOverIndex.value = -1
+}
+
+function onDragEnd() {
+  dragIndex.value = -1
+  dragOverIndex.value = -1
+}
+
+async function saveReorder() {
+  reorderSaving.value = true
+  try {
+    const ids = docs.value.map(d => d.id)
+    await api.reorderContent(props.type, ids)
+    notifySuccess($t('contentList.reorder_saved'))
+    exitReorder()
+  } catch (e) {
+    notifyError($t('contentList.reorder_mode'), e)
+  } finally {
+    reorderSaving.value = false
+  }
+}
+
 onMounted(load)
 watch(() => props.type, () => { page.value = 1; load() })
 </script>
 
 <style scoped>
 .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.header-actions { display: flex; gap: 8px; align-items: center; }
 .page-title { font-size: 22px; }
 .btn {
   padding: 8px 20px; background: var(--primary); color: white; border: none;
   border-radius: var(--radius); font-size: 14px; cursor: pointer; font-weight: 600;
 }
 .btn:hover { background: var(--primary-dark); }
+.btn-outline {
+  background: transparent; color: var(--primary); border: 1px solid var(--primary);
+}
+.btn-outline:hover { background: var(--primary-bg); }
 .table { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); border-collapse: collapse; }
 .table th, .table td { padding: 10px 16px; text-align: left; font-size: 14px; border-bottom: 1px solid var(--border); }
 .table th { font-weight: 600; color: var(--text-secondary); background: var(--bg); }
 .table a { color: var(--primary); text-decoration: none; }
 tr.selected { background: var(--primary-bg); }
+
+.reorder-table tr { cursor: grab; transition: background 0.15s; }
+.reorder-table tr:active { cursor: grabbing; }
+.reorder-table tr.dragging { opacity: 0.4; background: var(--primary-bg); }
+.reorder-table tr.drag-over { border-top: 2px solid var(--primary); }
+.drag-handle { color: var(--text-muted); text-align: center; cursor: grab; padding: 10px 4px !important; width: 36px; }
+
+.reorder-bar {
+  display: flex; align-items: center; gap: 10px; padding: 10px 16px;
+  background: var(--primary-bg); border: 1px solid var(--primary); border-radius: 8px; margin-bottom: 12px;
+  font-size: 13px; color: var(--text-secondary);
+}
+.btn-primary { color: white; background: var(--primary); border-color: var(--primary); }
+.btn-primary:hover:not(:disabled) { background: var(--primary-dark); }
+.btn-primary:disabled { opacity: 0.6; cursor: default; }
 
 .batch-bar {
   display: flex; align-items: center; gap: 8px; padding: 10px 16px;
@@ -188,6 +317,7 @@ tr.selected { background: var(--primary-bg); }
 .badge-archived { background: var(--badge-archived-bg, #F3F4F6); color: var(--badge-archived-color, #6B7280); }
 .badge-active { background: var(--badge-published-bg, #D1FAE5); color: var(--badge-published-color, #065F46); }
 .badge-revoked { background: var(--badge-danger-bg, #FEE2E2); color: var(--badge-danger-color, #991B1B); }
+.badge-scheduled { background: var(--badge-scheduled-bg, #DBEAFE); color: var(--badge-scheduled-color, #1E40AF); }
 .date { color: var(--text-secondary); font-size: 13px; }
 .btn-sm { padding: 4px 12px; font-size: 12px; border: 1px solid var(--border); background: var(--surface); border-radius: 4px; cursor: pointer; margin-right: 4px; }
 .btn-sm:hover { border-color: var(--primary); }

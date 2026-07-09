@@ -91,7 +91,13 @@
     "action_publish": "Publish",
     "action_archive": "Archive",
     "action_delete": "Delete",
-    "batch_error": "Batch operation"
+    "batch_error": "Batch operation",
+    "reorder_mode": "Reorder mode",
+    "reorder_exit": "Exit reorder",
+    "reorder_save": "Save order",
+    "reorder_saved": "Order saved",
+    "drag_handle": "Drag to reorder",
+    "reorder_hint": "Drag rows to reorder, then click Save"
   },
   "contentEdit": {
     "new": "New",

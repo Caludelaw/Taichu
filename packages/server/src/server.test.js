@@ -227,6 +227,79 @@ describe('Content CRUD', () => {
 });
 
 // ════════════════════════════════════════════════════════════
+// Content Reorder
+// ════════════════════════════════════════════════════════════
+
+describe('Content Reorder', () => {
+  let aId, bId, cId;
+
+  before(async () => {
+    const r1 = await request('POST', '/api/content/article', {
+      headers: { Authorization: `Bearer ${authToken}` },
+      body: { data: { title: 'Reorder A', slug: 'reorder-a' }, status: 'draft' },
+    });
+    aId = r1.body.id;
+    const r2 = await request('POST', '/api/content/article', {
+      headers: { Authorization: `Bearer ${authToken}` },
+      body: { data: { title: 'Reorder B', slug: 'reorder-b' }, status: 'draft' },
+    });
+    bId = r2.body.id;
+    const r3 = await request('POST', '/api/content/article', {
+      headers: { Authorization: `Bearer ${authToken}` },
+      body: { data: { title: 'Reorder C', slug: 'reorder-c' }, status: 'draft' },
+    });
+    cId = r3.body.id;
+  });
+
+  after(async () => {
+    await request('DELETE', `/api/content/article/${aId}`, {
+      headers: { Authorization: `Bearer ${authToken}` },
+    });
+    await request('DELETE', `/api/content/article/${bId}`, {
+      headers: { Authorization: `Bearer ${authToken}` },
+    });
+    await request('DELETE', `/api/content/article/${cId}`, {
+      headers: { Authorization: `Bearer ${authToken}` },
+    });
+  });
+
+  it('PUT /api/content/article/reorder reorders documents', async () => {
+    const res = await request('PUT', '/api/content/article/reorder', {
+      headers: { Authorization: `Bearer ${authToken}` },
+      body: { ids: [cId, bId, aId] },
+    });
+    assert.equal(res.status, 200);
+    assert.equal(res.body.total, 3);
+    assert.equal(res.body.docs[0].id, cId);
+    assert.equal(res.body.docs[1].id, bId);
+    assert.equal(res.body.docs[2].id, aId);
+  });
+
+  it('PUT /api/content/article/reorder without auth returns 401', async () => {
+    const res = await request('PUT', '/api/content/article/reorder', {
+      body: { ids: [aId] },
+    });
+    assert.equal(res.status, 401);
+  });
+
+  it('PUT /api/content/article/reorder with empty ids returns 400', async () => {
+    const res = await request('PUT', '/api/content/article/reorder', {
+      headers: { Authorization: `Bearer ${authToken}` },
+      body: { ids: [] },
+    });
+    assert.equal(res.status, 400);
+  });
+
+  it('PUT /api/content/article/reorder without ids returns 400', async () => {
+    const res = await request('PUT', '/api/content/article/reorder', {
+      headers: { Authorization: `Bearer ${authToken}` },
+      body: {},
+    });
+    assert.equal(res.status, 400);
+  });
+});
+
+// ════════════════════════════════════════════════════════════
 // Content Types
 // ════════════════════════════════════════════════════════════
 

@@ -16,6 +16,7 @@
  * @property {object} data — 结构化内容数据
  * @property {string} status — 'draft' | 'scheduled' | 'published' | 'archived'
  * @property {string|null} publishedAt — 定时发布时间 (ISO 8601)
+ * @property {number} [sortOrder] — 排序权重 (默认 0)
  * @property {string} tenantId — 租户 ID (默认 'default')
  * @property {string} createdAt — ISO 8601
  * @property {string} updatedAt — ISO 8601
@@ -42,6 +43,7 @@
  * @property {function(QueryOptions): Promise<Document[]>} list
  * @property {function(string, object): Promise<Document>} update
  * @property {function(string): Promise<boolean>} delete
+ * @property {function(string[]): Promise<Document[]>} reorder — 批量更新排序
  * @property {function(): Promise<number>} count
  */
 
@@ -64,6 +66,7 @@ export function createMemoryStore() {
         data: doc.data || {},
         status: doc.status || 'draft',
         publishedAt: doc.publishedAt || null,
+        sortOrder: doc.sortOrder ?? 0,
         tenantId: doc.tenantId || 'default',
         createdAt: doc.createdAt || now,
         updatedAt: now,
@@ -104,6 +107,12 @@ export function createMemoryStore() {
       const orderBy = options.orderBy || 'updatedAt';
       const order = options.order || 'desc';
       results.sort((a, b) => {
+        // Numeric sort for sortOrder (supports both camelCase and snake_case from SQLite)
+        if (orderBy === 'sortOrder' || orderBy === 'sort_order') {
+          const va = a.sortOrder ?? 0;
+          const vb = b.sortOrder ?? 0;
+          return order === 'desc' ? vb - va : va - vb;
+        }
         const va = a[orderBy] || '';
         const vb = b[orderBy] || '';
         return order === 'desc' ? vb.localeCompare(va) : va.localeCompare(vb);
@@ -133,6 +142,22 @@ export function createMemoryStore() {
 
     async delete(id) {
       return docs.delete(id);
+    },
+
+    /** Batch update sortOrder for reordering */
+    async reorder(orderedIds) {
+      if (!Array.isArray(orderedIds) || !orderedIds.length) return [];
+      const now = new Date().toISOString();
+      const result = [];
+      for (let i = 0; i < orderedIds.length; i++) {
+        const doc = docs.get(orderedIds[i]);
+        if (doc) {
+          doc.sortOrder = i;
+          doc.updatedAt = now;
+          result.push({ ...doc, data: { ...doc.data } });
+        }
+      }
+      return result;
     },
 
     async count(options = {}) {

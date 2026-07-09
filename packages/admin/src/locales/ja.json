@@ -91,7 +91,13 @@
     "action_publish": "公開",
     "action_archive": "アーカイブ",
     "action_delete": "削除",
-    "batch_error": "一括操作"
+    "batch_error": "一括操作",
+    "reorder_mode": "並べ替えモード",
+    "reorder_exit": "並べ替えを終了",
+    "reorder_save": "順序を保存",
+    "reorder_saved": "順序を保存しました",
+    "drag_handle": "ドラッグで並べ替え",
+    "reorder_hint": "行をドラッグして順序を調整し、保存をクリック"
   },
   "contentEdit": {
     "new": "新規作成",

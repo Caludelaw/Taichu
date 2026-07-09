@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS documents (
   data         TEXT NOT NULL DEFAULT '{}',
   status       TEXT NOT NULL DEFAULT 'draft',
   published_at TEXT,
+  sort_order   INTEGER NOT NULL DEFAULT 0,
   tenant_id    TEXT NOT NULL DEFAULT 'default',
   created_by   TEXT,
   created_at   TEXT NOT NULL,
@@ -39,7 +40,8 @@ CREATE INDEX IF NOT EXISTS idx_documents_tenant ON documents(tenant_id);
 
 const MIGRATION_SQL = [
   `ALTER TABLE documents ADD COLUMN published_at TEXT;`,
-  `ALTER TABLE documents ADD COLUMN tenant_id TEXT NOT NULL DEFAULT 'default';`
+  `ALTER TABLE documents ADD COLUMN tenant_id TEXT NOT NULL DEFAULT 'default';`,
+  `ALTER TABLE documents ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0;`
 ];
 
 const INDEX_MIGRATIONS = [
@@ -143,11 +145,12 @@ export async function createSQLiteStore(config = {}) {
       data: safeJsonParse(row[2]),
       status: row[3],
       publishedAt: row[4] || null,
-      tenantId: row[5] || 'default',
-      createdBy: row[6],
-      createdAt: row[7],
-      updatedAt: row[8],
-      meta: safeJsonParse(row[9])
+      sortOrder: row[5] ?? 0,
+      tenantId: row[6] || 'default',
+      createdBy: row[7],
+      createdAt: row[8],
+      updatedAt: row[9],
+      meta: safeJsonParse(row[10])
     };
   }
 
@@ -171,20 +174,21 @@ export async function createSQLiteStore(config = {}) {
       const data = JSON.stringify(doc.data || {});
       const status = doc.status || 'draft';
       const publishedAt = doc.publishedAt || null;
+      const sortOrder = doc.sortOrder ?? 0;
       const tenantId = doc.tenantId || 'default';
       const createdBy = doc.createdBy || null;
       const createdAt = doc.createdAt || now;
       const meta = JSON.stringify(doc.meta || {});
 
       db.run(
-        `INSERT INTO documents (id, type, data, status, published_at, tenant_id, created_by, created_at, updated_at, meta)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [id, type, data, status, publishedAt, tenantId, createdBy, createdAt, now, meta]
+        `INSERT INTO documents (id, type, data, status, published_at, sort_order, tenant_id, created_by, created_at, updated_at, meta)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [id, type, data, status, publishedAt, sortOrder, tenantId, createdBy, createdAt, now, meta]
       );
 
       markDirty();
 
-      return { id, type, data: safeJsonParse(data), status, publishedAt, tenantId, createdBy, createdAt, updatedAt: now, meta: safeJsonParse(meta) };
+      return { id, type, data: safeJsonParse(data), status, publishedAt, sortOrder, tenantId, createdBy, createdAt, updatedAt: now, meta: safeJsonParse(meta) };
     },
 
     async get(id) {
@@ -225,7 +229,7 @@ export async function createSQLiteStore(config = {}) {
       const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
       // Whitelist validation for ORDER BY columns — prevents SQL injection
-      const ALLOWED_ORDER_COLUMNS = new Set(['id', 'type', 'status', 'created_at', 'updated_at']);
+      const ALLOWED_ORDER_COLUMNS = new Set(['id', 'type', 'status', 'created_at', 'updated_at', 'sort_order']);
       const orderBy = ALLOWED_ORDER_COLUMNS.has(options.orderBy) ? options.orderBy : 'updated_at';
       const order = options.order === 'asc' ? 'ASC' : 'DESC';
       // LIMIT/OFFSET must be integers
@@ -304,6 +308,29 @@ export async function createSQLiteStore(config = {}) {
       return true;
     },
 
+    /** Batch update sort_order for reordering */
+    async reorder(orderedIds) {
+      if (!Array.isArray(orderedIds) || !orderedIds.length) return [];
+
+      db.run('BEGIN TRANSACTION');
+      const docs = [];
+      try {
+        for (let i = 0; i < orderedIds.length; i++) {
+          db.run('UPDATE documents SET sort_order = ?, updated_at = ? WHERE id = ?', [
+            i, new Date().toISOString(), orderedIds[i]
+          ]);
+          const doc = await this.get(orderedIds[i]);
+          if (doc) docs.push(doc);
+        }
+        db.run('COMMIT');
+      } catch (e) {
+        db.run('ROLLBACK');
+        throw e;
+      }
+      markDirty();
+      return docs;
+    },
+
     async count(options = {}) {
       const conditions = [];
       const params = [];
@@ -353,6 +380,7 @@ function rowToDocFromObj(row) {
     data: safeJsonParse(row.data),
     status: row.status,
     publishedAt: row.published_at || null,
+    sortOrder: row.sort_order ?? 0,
     tenantId: row.tenant_id || 'default',
     createdBy: row.created_by || null,
     createdAt: row.created_at,

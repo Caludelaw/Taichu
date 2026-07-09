@@ -91,7 +91,13 @@
     "action_publish": "发布",
     "action_archive": "归档",
     "action_delete": "删除",
-    "batch_error": "批量操作"
+    "batch_error": "批量操作",
+    "reorder_mode": "排序模式",
+    "reorder_exit": "退出排序",
+    "reorder_save": "保存排序",
+    "reorder_saved": "排序已保存",
+    "drag_handle": "拖拽排序",
+    "reorder_hint": "拖拽行调整顺序，完成后点击保存"
   },
   "contentEdit": {
     "new": "新建",

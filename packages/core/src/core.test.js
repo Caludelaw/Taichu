@@ -233,6 +233,60 @@ describe('MemoryStore', () => {
   });
 });
 
+describe('MemoryStore batchGet', () => {
+  it('should batch get documents by type and id', async () => {
+    const store = createMemoryStore();
+    const a = await store.create({ type: 'article', data: { title: 'A' } });
+    const p = await store.create({ type: 'page', data: { title: 'P' } });
+
+    const docs = await store.batchGet([
+      { type: 'article', id: a.id },
+      { type: 'page', id: p.id }
+    ]);
+    assert.equal(docs.length, 2);
+    assert.ok(docs.some(d => d.data.title === 'A'));
+    assert.ok(docs.some(d => d.data.title === 'P'));
+  });
+
+  it('should skip non-matching type', async () => {
+    const store = createMemoryStore();
+    const a = await store.create({ type: 'article', data: { title: 'A' } });
+
+    const docs = await store.batchGet([
+      { type: 'page', id: a.id }
+    ]);
+    assert.equal(docs.length, 0);
+  });
+
+  it('should handle empty array', async () => {
+    const store = createMemoryStore();
+    const docs = await store.batchGet([]);
+    assert.deepEqual(docs, []);
+  });
+
+  it('should skip nonexistent ids', async () => {
+    const store = createMemoryStore();
+    const a = await store.create({ type: 'article', data: { title: 'A' } });
+
+    const docs = await store.batchGet([
+      { type: 'article', id: a.id },
+      { type: 'article', id: 'nonexistent' }
+    ]);
+    assert.equal(docs.length, 1);
+    assert.equal(docs[0].data.title, 'A');
+  });
+
+  it('should return deep copies not references', async () => {
+    const store = createMemoryStore();
+    const a = await store.create({ type: 'article', data: { title: 'A' } });
+
+    const [doc] = await store.batchGet([{ type: 'article', id: a.id }]);
+    doc.data.title = 'Mutated';
+    const fresh = await store.get(a.id);
+    assert.equal(fresh.data.title, 'A');
+  });
+});
+
 // ════════════════════════════════════════════════════════════
 // Hook System
 // ════════════════════════════════════════════════════════════

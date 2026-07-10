@@ -44,6 +44,7 @@
  * @property {function(string, object): Promise<Document>} update
  * @property {function(string): Promise<boolean>} delete
  * @property {function(string[]): Promise<Document[]>} reorder — 批量更新排序
+ * @property {function(Array<{type: string, id: string}>): Promise<Document[]>} batchGet — 批量获取文档
  * @property {function(): Promise<number>} count
  */
 
@@ -81,6 +82,19 @@ export function createMemoryStore() {
       const doc = docs.get(id);
       if (!doc) return null;
       return { ...doc, data: { ...doc.data } };
+    },
+
+    /** Batch get documents by { type, id } pairs */
+    async batchGet(items) {
+      if (!Array.isArray(items) || !items.length) return [];
+      const results = [];
+      for (const { type, id } of items) {
+        const doc = docs.get(id);
+        if (doc && doc.type === type) {
+          results.push({ ...doc, data: { ...doc.data } });
+        }
+      }
+      return results;
     },
 
     async list(options = {}) {

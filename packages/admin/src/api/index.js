@@ -25,6 +25,8 @@ export const api = {
   },
   reorderContent: (type, ids) =>
     request(`/content/${type}/reorder`, { method: 'PUT', body: JSON.stringify({ ids }) }),
+  batchGetContent: (items) =>
+    request('/content/batch', { method: 'POST', body: JSON.stringify({ items }) }),
   getContent: (type, id) => request(`/content/${type}/${id}`),
   createContent: (type, data, status = 'draft') =>
     request(`/content/${type}`, { method: 'POST', body: JSON.stringify({ data, status }) }),

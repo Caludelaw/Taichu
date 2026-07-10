@@ -227,6 +227,92 @@ describe('Content CRUD', () => {
 });
 
 // ════════════════════════════════════════════════════════════
+// Content Batch GET
+// ════════════════════════════════════════════════════════════
+
+describe('Content Batch GET', () => {
+  let articleId, pageId;
+
+  before(async () => {
+    const r1 = await request('POST', '/api/content/article', {
+      headers: { Authorization: `Bearer ${authToken}` },
+      body: { data: { title: 'Batch Article', slug: 'batch-article' }, status: 'draft' },
+    });
+    articleId = r1.body.id;
+    const r2 = await request('POST', '/api/content/page', {
+      headers: { Authorization: `Bearer ${authToken}` },
+      body: { data: { title: 'Batch Page', slug: 'batch-page' }, status: 'draft' },
+    });
+    pageId = r2.body.id;
+  });
+
+  after(async () => {
+    if (articleId) await request('DELETE', `/api/content/article/${articleId}`, {
+      headers: { Authorization: `Bearer ${authToken}` },
+    });
+    if (pageId) await request('DELETE', `/api/content/page/${pageId}`, {
+      headers: { Authorization: `Bearer ${authToken}` },
+    });
+  });
+
+  it('POST /api/content/batch returns matching cross-type docs', async () => {
+    const res = await request('POST', '/api/content/batch', {
+      headers: { Authorization: `Bearer ${authToken}` },
+      body: { items: [
+        { type: 'article', id: articleId },
+        { type: 'page', id: pageId }
+      ]},
+    });
+    assert.equal(res.status, 200);
+    assert.equal(res.body.total, 2);
+    assert.equal(res.body.docs.length, 2);
+  });
+
+  it('POST /api/content/batch skips non-matching type/id', async () => {
+    const res = await request('POST', '/api/content/batch', {
+      headers: { Authorization: `Bearer ${authToken}` },
+      body: { items: [
+        { type: 'page', id: articleId },
+        { type: 'article', id: 'nonexistent' }
+      ]},
+    });
+    assert.equal(res.status, 200);
+    assert.equal(res.body.total, 0);
+  });
+
+  it('POST /api/content/batch with empty items returns 400', async () => {
+    const res = await request('POST', '/api/content/batch', {
+      headers: { Authorization: `Bearer ${authToken}` },
+      body: { items: [] },
+    });
+    assert.equal(res.status, 400);
+  });
+
+  it('POST /api/content/batch without auth returns 401', async () => {
+    const res = await request('POST', '/api/content/batch', {
+      body: { items: [{ type: 'article', id: articleId }] },
+    });
+    assert.equal(res.status, 401);
+  });
+
+  it('POST /api/content/batch with missing type returns 400', async () => {
+    const res = await request('POST', '/api/content/batch', {
+      headers: { Authorization: `Bearer ${authToken}` },
+      body: { items: [{ id: articleId }] },
+    });
+    assert.equal(res.status, 400);
+  });
+
+  it('POST /api/content/batch without items field returns 400', async () => {
+    const res = await request('POST', '/api/content/batch', {
+      headers: { Authorization: `Bearer ${authToken}` },
+      body: { other: 'x' },
+    });
+    assert.equal(res.status, 400);
+  });
+});
+
+// ════════════════════════════════════════════════════════════
 // Content Reorder
 // ════════════════════════════════════════════════════════════
 

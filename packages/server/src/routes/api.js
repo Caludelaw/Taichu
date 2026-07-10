@@ -247,6 +247,43 @@ export async function apiRoutes(ctx) {
     return;
   }
 
+  // /api/content/batch — batch GET (cross-type)
+  const batchGetMatch = pathname.match(/^\/api\/content\/batch$/);
+  if (batchGetMatch && method === 'POST') {
+    const authResult = await requireAuth(ctx);
+    if (!authResult.authenticated) {
+      ctx.res.writeHead(authResult.status, { 'Content-Type': 'application/json' });
+      ctx.res.end(JSON.stringify({ error: authResult.error, message: authResult.message }));
+      return;
+    }
+    ctx.actor = authResult.actor;
+
+    const { items } = ctx.body || {};
+    if (!Array.isArray(items) || !items.length) {
+      ctx.res.writeHead(400, { 'Content-Type': 'application/json' });
+      ctx.res.end(JSON.stringify({ error: 'VALIDATION_ERROR', message: 'items[] is required' }));
+      return;
+    }
+
+    for (const item of items) {
+      if (!item.type || !item.id) {
+        ctx.res.writeHead(400, { 'Content-Type': 'application/json' });
+        ctx.res.end(JSON.stringify({ error: 'VALIDATION_ERROR', message: 'Each item must have type and id' }));
+        return;
+      }
+    }
+
+    try {
+      const docs = await ctx.store.batchGet(items);
+      ctx.res.writeHead(200, { 'Content-Type': 'application/json' });
+      ctx.res.end(JSON.stringify({ docs, total: docs.length }));
+    } catch (e) {
+      ctx.res.writeHead(500, { 'Content-Type': 'application/json' });
+      ctx.res.end(JSON.stringify({ error: 'INTERNAL_ERROR', message: e.message }));
+    }
+    return;
+  }
+
   // /api/content/:type/batch — bulk operations
   const batchMatch = pathname.match(/^\/api\/content\/([a-z][a-z0-9_]*)\/batch$/);
   if (batchMatch && method === 'POST') {

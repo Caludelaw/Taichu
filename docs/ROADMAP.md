@@ -144,7 +144,7 @@
 | Content Preview in Admin | P2 | ✅ Done |
 | Revisions Diff Viewer UI | P2 | ✅ Done |
 | Drag-and-Drop Content Ordering | P2 | ✅ Done |
-| Batch GET API Endpoint | P2 | ⬜ Todo |
+| Batch GET API Endpoint | P2 | ✅ Done |
 | Federation Registry Persistence (memory → store) | P2 | ⬜ Todo |
 | Rate Limiter Persistence (memory → store-backed) | P2 | ⬜ Todo |
 | better-sqlite3 Migration (full Litestream HA support) | P3 | ⬜ Todo |

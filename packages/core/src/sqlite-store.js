@@ -204,6 +204,25 @@ export async function createSQLiteStore(config = {}) {
       return null;
     },
 
+    /** Batch get documents by { type, id } pairs using IN clause */
+    async batchGet(items) {
+      if (!Array.isArray(items) || !items.length) return [];
+      const placeholders = items.map(() => '(?, ?)').join(', ');
+      const params = [];
+      for (const { type, id } of items) {
+        params.push(type, id);
+      }
+      const sql = `SELECT * FROM documents WHERE (type, id) IN (${placeholders})`;
+      const stmt = db.prepare(sql);
+      stmt.bind(params);
+      const results = [];
+      while (stmt.step()) {
+        results.push(rowToDocFromObj(stmt.getAsObject()));
+      }
+      stmt.free();
+      return results;
+    },
+
     async list(options = {}) {
       const conditions = [];
       const params = [];
